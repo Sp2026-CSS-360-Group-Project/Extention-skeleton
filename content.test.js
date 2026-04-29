@@ -1,4 +1,5 @@
 // Mock the chrome API before importing content.js
+// six seven
 global.chrome = {
   runtime: {
     onMessage: {
