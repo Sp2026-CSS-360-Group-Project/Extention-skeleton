@@ -8,7 +8,7 @@ global.chrome = {
   }
 };
 
-const { doSomething } = require("../content.js");
+const { doSomething } = require("./content.js");
 
 describe("doSomething()", () => {
   beforeEach(() => {
@@ -21,7 +21,7 @@ describe("doSomething()", () => {
   });
 
   test("counts a single anchor tag", () => {
-    document.body.innerHTML = `<a href="https://example.com">Click me</a>`;
+    document.body.innerHTML = `<a href="https://example.test">Click me</a>`;
     expect(doSomething()).toBe("Found 1 link(s) on this page.");
   });
 

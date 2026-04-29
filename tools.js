@@ -1,62 +1,74 @@
-// Mock chrome API
-global.chrome = {
-  runtime: {
-    onMessage: { addListener: jest.fn() },
-    getURL: jest.fn(path => `chrome-extension://abc/${path}`)
+// tools.js - FocusKit runtime registry for popup-rendered productivity tools.
+
+function markToolLaunched(button, label) {
+  button.classList.add("active-tool");
+  button.textContent = label;
+  button.setAttribute("aria-pressed", "true");
+}
+
+const TOOLS = [
+  {
+    id: "pomodoro",
+    name: "Pomodoro",
+    icon: "P",
+    desc: "Start a focused work sprint with intentional breaks.",
+    launch(button) {
+      markToolLaunched(button, "Ready");
+      chrome.storage.local.set({ activeTool: "pomodoro" });
+
+      if (window.FocusKitPomodoro) {
+        window.FocusKitPomodoro.open();
+      }
+    }
   },
-  tabs: {
-    query: jest.fn(),
-    create: jest.fn(),
-    sendMessage: jest.fn()
+  {
+    id: "iris",
+    name: "Iris",
+    icon: "I",
+    desc: "Reduce visual clutter for calmer reading sessions.",
+    launch(button) {
+      markToolLaunched(button, "Ready");
+      chrome.storage.local.set({ activeTool: "iris" });
+    }
   },
-  storage: {
-    local: {
-      get: jest.fn(),
-      set: jest.fn()
+  {
+    id: "eisenhower",
+    name: "Eisenhower",
+    icon: "E",
+    desc: "Sort tasks by urgency and importance before starting.",
+    launch(button) {
+      markToolLaunched(button, "Ready");
+      chrome.storage.local.set({ activeTool: "eisenhower" });
     }
   }
-};
+];
 
-const { TOOLS, FOCUS_MODES } = require("../tools.js");
+const FOCUS_MODES = [
+  {
+    id: "deep-work",
+    name: "Deep Work",
+    icon: "D",
+    desc: "Long, distraction-light sessions for complex work."
+  },
+  {
+    id: "study",
+    name: "Study",
+    icon: "S",
+    desc: "Structured review mode for notes, reading, and practice."
+  },
+  {
+    id: "break",
+    name: "Break",
+    icon: "B",
+    desc: "A softer mode for resetting before the next session."
+  }
+];
 
-describe("TOOLS registry", () => {
-  test("has at least 3 tools", () => {
-    expect(TOOLS.length).toBeGreaterThanOrEqual(3);
-  });
+if (typeof window !== "undefined") {
+  window.TOOLS = TOOLS;
+  window.FOCUS_MODES = FOCUS_MODES;
+}
 
-  test("every tool has id, name, icon, and launch function", () => {
-    TOOLS.forEach(tool => {
-      expect(tool).toHaveProperty("id");
-      expect(tool).toHaveProperty("name");
-      expect(tool).toHaveProperty("icon");
-      expect(typeof tool.launch).toBe("function");
-    });
-  });
-
-  test("tool ids are unique", () => {
-    const ids = TOOLS.map(t => t.id);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
-  test("includes pomodoro, iris, and eisenhower", () => {
-    const ids = TOOLS.map(t => t.id);
-    expect(ids).toContain("pomodoro");
-    expect(ids).toContain("iris");
-    expect(ids).toContain("eisenhower");
-  });
-});
-
-describe("FOCUS_MODES registry", () => {
-  test("has at least 3 focus modes", () => {
-    expect(FOCUS_MODES.length).toBeGreaterThanOrEqual(3);
-  });
-
-  test("every mode has id, name, icon, and desc", () => {
-    FOCUS_MODES.forEach(mode => {
-      expect(mode).toHaveProperty("id");
-      expect(mode).toHaveProperty("name");
-      expect(mode).toHaveProperty("icon");
-      expect(mode).toHaveProperty("desc");
-    });
-  });
-});
+if (typeof module !== "undefined") {
+  module.exports = { TOOLS, FOCUS_MODES, markToolLaunched };
+}

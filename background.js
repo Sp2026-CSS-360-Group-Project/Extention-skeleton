@@ -1,18 +1,20 @@
-// background.js — service worker for the extension
+// background.js - service worker for extension lifecycle and messages.
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("Extension installed.");
+  chrome.storage.local.set({ installed: true });
 });
 
-// Listen for messages from content scripts or popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "fetchData") {
-    // Example: fetch some data and send it back
-    fetch("https://api.example.com/data")
-      .then((res) => res.json())
-      .then((data) => sendResponse({ success: true, data }))
-      .catch((err) => sendResponse({ success: false, error: err.message }));
-
-    return true; // Keep message channel open for async response
+  if (!message || typeof message.action !== "string") {
+    sendResponse({ success: false, error: "Invalid message" });
+    return false;
   }
+
+  if (message.action === "ping") {
+    sendResponse({ success: true, app: "FocusKit" });
+    return false;
+  }
+
+  sendResponse({ success: false, error: `Unknown action: ${message.action}` });
+  return false;
 });
