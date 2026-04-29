@@ -4,24 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FocusKit</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
   <div class="app">
     <header class="header">
       <div class="logo">
-        <span class="logo-icon">◈</span>
+        <span class="logo-icon">FK</span>
         <span class="logo-text">FocusKit</span>
       </div>
-      <div class="status-dot" id="statusDot"></div>
+      <div class="status-dot" id="statusDot" aria-label="Focus mode inactive"></div>
     </header>
 
-    <nav class="tab-nav">
-      <button class="tab-btn active" data-tab="tools">Tools</button>
-      <button class="tab-btn" data-tab="focus">Focus</button>
-      <button class="tab-btn" data-tab="settings">Settings</button>
+    <nav class="tab-nav" aria-label="FocusKit sections">
+      <button class="tab-btn active" type="button" data-tab="tools">Tools</button>
+      <button class="tab-btn" type="button" data-tab="focus">Focus</button>
+      <button class="tab-btn" type="button" data-tab="settings">Settings</button>
     </nav>
 
     <section class="tab-panel active" id="tab-tools">

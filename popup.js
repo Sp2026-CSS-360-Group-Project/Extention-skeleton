@@ -1,91 +1,159 @@
-// popup.js — handles tab navigation and renders tools/focus modes
+// popup.js - handles tab navigation, registry rendering, and persisted settings.
+
+const SETTING_KEYS = ["notifications", "sound", "dark", "autostart"];
+
+const state = {
+  selectedFocusCard: null
+};
 
 document.addEventListener("DOMContentLoaded", () => {
   setupTabs();
   renderTools();
   renderFocusModes();
-  loadSettings();
+  loadSavedState();
+  setupSettingsPersistence();
 });
 
-// Tab navigation
 function setupTabs() {
   const buttons = document.querySelectorAll(".tab-btn");
   const panels = document.querySelectorAll(".tab-panel");
 
-  buttons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      buttons.forEach(b => b.classList.remove("active"));
-      panels.forEach(p => p.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+  buttons.forEach(button => {
+    button.addEventListener("click", () => {
+      buttons.forEach(currentButton => currentButton.classList.remove("active"));
+      panels.forEach(panel => panel.classList.remove("active"));
+
+      button.classList.add("active");
+      document.getElementById(`tab-${button.dataset.tab}`).classList.add("active");
     });
   });
 }
 
-// Render tools dynamically from TOOLS registry
 function renderTools() {
   const container = document.getElementById("toolsList");
-  container.innerHTML = "";
+  container.replaceChildren();
 
-  TOOLS.forEach(tool => {
+  window.TOOLS.forEach(tool => {
     const card = document.createElement("div");
     card.className = "tool-card";
-    card.innerHTML = `
-      <div class="tool-info">
-        <span class="tool-icon">${tool.icon}</span>
-        <span class="tool-name">${tool.name}</span>
-      </div>
-      <button class="tool-launch" data-id="${tool.id}">Launch</button>
-    `;
-    card.querySelector(".tool-launch").addEventListener("click", (e) => {
-      tool.launch(e.currentTarget);
-    });
+
+    const toolInfo = document.createElement("div");
+    toolInfo.className = "tool-info";
+
+    const icon = document.createElement("span");
+    icon.className = "tool-icon";
+    icon.textContent = tool.icon;
+
+    const textWrap = document.createElement("div");
+    textWrap.className = "tool-copy";
+
+    const name = document.createElement("span");
+    name.className = "tool-name";
+    name.textContent = tool.name;
+
+    const desc = document.createElement("span");
+    desc.className = "tool-desc";
+    desc.textContent = tool.desc;
+
+    const launchButton = document.createElement("button");
+    launchButton.className = "tool-launch";
+    launchButton.type = "button";
+    launchButton.dataset.id = tool.id;
+    launchButton.textContent = "Launch";
+    launchButton.addEventListener("click", () => tool.launch(launchButton));
+
+    textWrap.append(name, desc);
+    toolInfo.append(icon, textWrap);
+    card.append(toolInfo, launchButton);
     container.appendChild(card);
   });
 }
 
-// Render focus modes
 function renderFocusModes() {
   const container = document.getElementById("focusModes");
-  container.innerHTML = "";
-  let selected = null;
+  container.replaceChildren();
 
-  FOCUS_MODES.forEach(mode => {
-    const card = document.createElement("div");
+  window.FOCUS_MODES.forEach(mode => {
+    const card = document.createElement("button");
     card.className = "focus-card";
-    card.innerHTML = `
-      <div class="focus-header">
-        <span class="focus-icon">${mode.icon}</span>
-        <span class="focus-name">${mode.name}</span>
-      </div>
-      <p class="focus-desc">${mode.desc}</p>
-    `;
-    card.addEventListener("click", () => {
-      if (selected) selected.classList.remove("selected");
-      card.classList.add("selected");
-      selected = card;
-      document.getElementById("statusDot").classList.add("active");
-      chrome.storage.local.set({ focusMode: mode.id });
-    });
+    card.type = "button";
+    card.dataset.modeId = mode.id;
+
+    const header = document.createElement("div");
+    header.className = "focus-header";
+
+    const icon = document.createElement("span");
+    icon.className = "focus-icon";
+    icon.textContent = mode.icon;
+
+    const name = document.createElement("span");
+    name.className = "focus-name";
+    name.textContent = mode.name;
+
+    const desc = document.createElement("p");
+    desc.className = "focus-desc";
+    desc.textContent = mode.desc;
+
+    header.append(icon, name);
+    card.append(header, desc);
+    card.addEventListener("click", () => selectFocusMode(mode.id, card, true));
     container.appendChild(card);
   });
 }
 
-// Load saved settings
-function loadSettings() {
-  chrome.storage.local.get(["notifications", "sound", "dark", "autostart"], (data) => {
-    if (data.notifications !== undefined)
-      document.getElementById("settingNotifications").checked = data.notifications;
-    if (data.sound !== undefined)
-      document.getElementById("settingSound").checked = data.sound;
-    if (data.autostart !== undefined)
-      document.getElementById("settingAutostart").checked = data.autostart;
-  });
+function loadSavedState() {
+  chrome.storage.local.get([...SETTING_KEYS, "focusMode"], data => {
+    SETTING_KEYS.forEach(key => {
+      const input = document.getElementById(`setting${capitalize(key)}`);
 
-  // Save on change
+      if (input && data[key] !== undefined) {
+        input.checked = data[key];
+      }
+    });
+
+    if (data.focusMode) {
+      const savedCard = document.querySelector(`[data-mode-id="${data.focusMode}"]`);
+
+      if (savedCard) {
+        selectFocusMode(data.focusMode, savedCard, false);
+      }
+    }
+  });
+}
+
+function setupSettingsPersistence() {
   document.querySelectorAll(".settings-list input[type=checkbox]").forEach(input => {
     input.addEventListener("change", () => {
-      chrome.storage.local.set({ [input.id.replace("setting", "").toLowerCase()]: input.checked });
+      chrome.storage.local.set({ [settingKeyFromInput(input)]: input.checked });
     });
   });
+}
+
+function selectFocusMode(modeId, card, shouldPersist) {
+  if (state.selectedFocusCard) {
+    state.selectedFocusCard.classList.remove("selected");
+  }
+
+  card.classList.add("selected");
+  state.selectedFocusCard = card;
+
+  const statusDot = document.getElementById("statusDot");
+  statusDot.classList.add("active");
+  statusDot.setAttribute("aria-label", `Focus mode active: ${modeId}`);
+
+  if (shouldPersist) {
+    chrome.storage.local.set({ focusMode: modeId });
+  }
+}
+
+function settingKeyFromInput(input) {
+  return input.id.replace("setting", "").toLowerCase();
+}
+
+function capitalize(value) {
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+if (typeof module !== "undefined") {
+  module.exports = { settingKeyFromInput, capitalize };
 }
