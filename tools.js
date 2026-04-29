@@ -15,6 +15,10 @@ const TOOLS = [
     launch(button) {
       markToolLaunched(button, "Ready");
       chrome.storage.local.set({ activeTool: "pomodoro" });
+
+      if (window.FocusKitPomodoro) {
+        window.FocusKitPomodoro.open();
+      }
     }
   },
   {

@@ -60,6 +60,7 @@ function renderTools() {
     launchButton.className = "tool-launch";
     launchButton.type = "button";
     launchButton.dataset.id = tool.id;
+    launchButton.setAttribute("aria-label", `Launch ${tool.name}`);
     launchButton.textContent = "Launch";
     launchButton.addEventListener("click", () => tool.launch(launchButton));
 
