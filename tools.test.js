@@ -1,3 +1,5 @@
+// tools.test.js - verifies tool and focus-mode registries used by the popup.
+
 // Mock chrome API before importing the runtime registry.
 global.chrome = {
   storage: {

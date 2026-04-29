@@ -1,3 +1,5 @@
+// pomodoro.test.js - covers pure Pomodoro timer state transitions and formatting.
+
 const {
   POMODORO_DURATION_SECONDS,
   createInitialPomodoroState,

@@ -1,3 +1,5 @@
+// smoke.extension.spec.js - loads the MV3 extension in Chromium and checks popup behavior.
+
 const fs = require("fs");
 const os = require("os");
 const path = require("path");

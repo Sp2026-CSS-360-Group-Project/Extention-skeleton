@@ -1,11 +1,14 @@
 // pomodoro.js - FocusKit Pomodoro timer state and popup UI.
 
+// Keep the timer duration and storage key centralized for state helpers and UI handlers.
 const POMODORO_DURATION_SECONDS = 25 * 60;
 const POMODORO_STORAGE_KEY = "pomodoroState";
 
+// Mutable popup session state; pure helpers below make this easy to test separately.
 let pomodoroState = createInitialPomodoroState();
 let pomodoroIntervalId = null;
 
+// Build a fresh paused Pomodoro state using an injectable timestamp for tests.
 function createInitialPomodoroState(now = Date.now()) {
   return {
     remainingSeconds: POMODORO_DURATION_SECONDS,
@@ -14,6 +17,7 @@ function createInitialPomodoroState(now = Date.now()) {
   };
 }
 
+// Format the timer display and clamp negative values to zero.
 function formatTime(totalSeconds) {
   const safeSeconds = Math.max(0, Math.floor(totalSeconds));
   const minutes = Math.floor(safeSeconds / 60).toString().padStart(2, "0");
@@ -22,6 +26,7 @@ function formatTime(totalSeconds) {
   return `${minutes}:${seconds}`;
 }
 
+// Advance a running timer according to elapsed wall-clock time.
 function tickPomodoro(state, now = Date.now()) {
   if (!state.isRunning) {
     return { ...state };
@@ -37,6 +42,7 @@ function tickPomodoro(state, now = Date.now()) {
   };
 }
 
+// Mark the timer running after first accounting for any elapsed saved time.
 function startPomodoro(state, now = Date.now()) {
   const currentState = tickPomodoro(state, now);
 
@@ -47,6 +53,7 @@ function startPomodoro(state, now = Date.now()) {
   };
 }
 
+// Pause the timer without discarding elapsed time.
 function pausePomodoro(state, now = Date.now()) {
   const currentState = tickPomodoro(state, now);
 
@@ -57,10 +64,12 @@ function pausePomodoro(state, now = Date.now()) {
   };
 }
 
+// Return a clean 25-minute timer.
 function resetPomodoro(now = Date.now()) {
   return createInitialPomodoroState(now);
 }
 
+// Normalize stored state so stale or malformed values cannot break the popup.
 function restorePomodoroState(savedState, now = Date.now()) {
   if (!savedState || typeof savedState.remainingSeconds !== "number") {
     return createInitialPomodoroState(now);
@@ -73,6 +82,7 @@ function restorePomodoroState(savedState, now = Date.now()) {
   }, now);
 }
 
+// Swap the Tools list for the Pomodoro panel and hydrate saved timer state.
 function openPomodoroPanel() {
   const toolsList = document.getElementById("toolsList");
   const panel = getPomodoroPanel();
@@ -82,12 +92,14 @@ function openPomodoroPanel() {
   loadPomodoroState(renderPomodoro);
 }
 
+// Hide the Pomodoro panel and stop any active popup interval.
 function closePomodoroPanel() {
   stopPomodoroInterval();
   document.getElementById("pomodoroPanel").hidden = true;
   document.getElementById("toolsList").hidden = false;
 }
 
+// Lazily create the panel because the Pomodoro tool is optional until launched.
 function getPomodoroPanel() {
   let panel = document.getElementById("pomodoroPanel");
 
@@ -116,6 +128,7 @@ function getPomodoroPanel() {
     </div>
   `;
 
+  // Bind controls once when the panel is first created.
   document.getElementById("tab-tools").appendChild(panel);
   panel.querySelector("#pomodoroStart").addEventListener("click", handlePomodoroStart);
   panel.querySelector("#pomodoroPause").addEventListener("click", handlePomodoroPause);
@@ -125,6 +138,7 @@ function getPomodoroPanel() {
   return panel;
 }
 
+// Start persists immediately, then the interval keeps storage and UI synchronized.
 function handlePomodoroStart() {
   pomodoroState = startPomodoro(pomodoroState);
   savePomodoroState(pomodoroState);
@@ -132,6 +146,7 @@ function handlePomodoroStart() {
   startPomodoroInterval();
 }
 
+// Pause persists the current elapsed state before stopping the interval.
 function handlePomodoroPause() {
   pomodoroState = pausePomodoro(pomodoroState);
   savePomodoroState(pomodoroState);
@@ -139,6 +154,7 @@ function handlePomodoroPause() {
   stopPomodoroInterval();
 }
 
+// Reset returns both storage and UI to the default paused state.
 function handlePomodoroReset() {
   pomodoroState = resetPomodoro();
   savePomodoroState(pomodoroState);
@@ -146,6 +162,7 @@ function handlePomodoroReset() {
   stopPomodoroInterval();
 }
 
+// Refresh the timer every second while it is running.
 function startPomodoroInterval() {
   stopPomodoroInterval();
   pomodoroIntervalId = setInterval(() => {
@@ -159,6 +176,7 @@ function startPomodoroInterval() {
   }, 1000);
 }
 
+// Clear the active interval when the panel closes, pauses, resets, or completes.
 function stopPomodoroInterval() {
   if (pomodoroIntervalId) {
     clearInterval(pomodoroIntervalId);
@@ -166,6 +184,7 @@ function stopPomodoroInterval() {
   }
 }
 
+// Load saved state and resume ticking if the timer was running while the popup closed.
 function loadPomodoroState(callback) {
   chrome.storage.local.get([POMODORO_STORAGE_KEY], data => {
     pomodoroState = restorePomodoroState(data[POMODORO_STORAGE_KEY]);
@@ -177,22 +196,26 @@ function loadPomodoroState(callback) {
   });
 }
 
+// Persist timer state in extension-local storage.
 function savePomodoroState(state) {
   chrome.storage.local.set({ [POMODORO_STORAGE_KEY]: state });
 }
 
+// Render the current timer value and running/paused label.
 function renderPomodoro(state) {
   getPomodoroPanel();
   document.getElementById("pomodoroTime").textContent = formatTime(state.remainingSeconds);
   document.getElementById("pomodoroStatus").textContent = state.isRunning ? "Running" : "Paused";
 }
 
+// Expose the launcher for tools.js in the browser runtime.
 if (typeof window !== "undefined") {
   window.FocusKitPomodoro = {
     open: openPomodoroPanel
   };
 }
 
+// Export pure timer helpers for Jest.
 if (typeof module !== "undefined") {
   module.exports = {
     POMODORO_DURATION_SECONDS,

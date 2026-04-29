@@ -1,5 +1,6 @@
-// Mock the chrome API before importing content.js
-// six seven
+// content.test.js - validates content script DOM helpers with a mocked Chrome API.
+
+// Mock the chrome API before importing content.js.
 global.chrome = {
   runtime: {
     onMessage: {
