@@ -143,8 +143,10 @@ function setupSettingsPersistence() {
 }
 
 function applyTheme(isDarkMode) {
-  document.body.classList.toggle("theme-dark", isDarkMode);
-  document.body.classList.toggle("theme-light", !isDarkMode);
+  document.querySelectorAll("body, .app").forEach(themeRoot => {
+    themeRoot.classList.toggle("theme-dark", isDarkMode);
+    themeRoot.classList.toggle("theme-light", !isDarkMode);
+  });
 }
 
 function resolveDarkMode(savedValue) {
