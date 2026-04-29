@@ -179,6 +179,7 @@ function selectFocusMode(modeId, card, shouldPersist) {
 
   if (shouldPersist) {
     chrome.storage.local.set({ focusMode: modeId });
+    chrome.runtime.sendMessage({ action: "focus:setMode", modeId });
   }
 }
 
