@@ -52,6 +52,30 @@ test("FocusKit popup renders core features without console errors", async () => 
     await page.getByRole("button", { name: "Settings" }).click();
     await expect(page.locator("#tab-settings.active")).toBeVisible();
     await expect(page.getByText("Notifications", { exact: true })).toBeVisible();
+    await expect(page.getByText("Sound effects", { exact: true })).toBeVisible();
+    await expect(page.getByText("Dark mode", { exact: true })).toBeVisible();
+    await expect(page.getByText("Auto-start timer", { exact: true })).toHaveCount(0);
+
+    const notifications = page.locator("#settingNotifications");
+    const sound = page.locator("#settingSound");
+    const dark = page.locator("#settingDark");
+
+    await page.locator(".setting-row", { hasText: "Notifications" }).locator(".slider").click();
+    await page.locator(".setting-row", { hasText: "Sound effects" }).locator(".slider").click();
+    await page.locator(".setting-row", { hasText: "Dark mode" }).locator(".slider").click();
+
+    await page.waitForFunction(() => new Promise(resolve => {
+      chrome.storage.local.get(["notifications", "sound", "dark"], data => {
+        resolve(data.notifications === false && data.sound === true && data.dark === false);
+      });
+    }));
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: "Settings" }).click();
+
+    await expect(notifications).not.toBeChecked();
+    await expect(sound).toBeChecked();
+    await expect(dark).not.toBeChecked();
 
     expect(errors).toEqual([]);
   } finally {

@@ -1,10 +1,33 @@
 # AGENTS.md
 
+## Git workflow
+
+After implementing a task:
+
+1. Run npm test.
+2. Run npm run smoke.
+3. If both pass, create a commit with a clear message.
+4. Push the current branch to origin.
+
+Use:
+
+git status
+git add .
+git commit -m "Clear message here"
+git push origin HEAD
+
+Do not push if npm test or npm run smoke fails.
+Do not force push.
+Do not rewrite history.
+Do not commit node_modules, coverage, playwright reports, or test output.
+
 ## Project
 
 This is FocusKit, a Manifest V3 Chrome extension.
 
 ## Required checks before saying done
+
+Before coding, add or update tests that prove this feature works. Then implement the feature. Then run npm test and npm run smoke. Do not say done unless both pass.
 
 Run these commands before completing any task:
 

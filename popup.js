@@ -1,6 +1,6 @@
 // popup.js - handles tab navigation, registry rendering, and persisted settings.
 
-const SETTING_KEYS = ["notifications", "sound", "dark", "autostart"];
+const SETTING_KEYS = ["notifications", "sound", "dark"];
 
 const state = {
   selectedFocusCard: null
