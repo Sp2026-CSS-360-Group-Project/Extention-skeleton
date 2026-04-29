@@ -5,6 +5,39 @@ const { test, expect, chromium } = require("@playwright/test");
 
 const extensionPath = path.resolve(__dirname, "..");
 
+async function readThemeColors(page) {
+  return page.locator("body").evaluate(body => {
+    const styles = getComputedStyle(body);
+
+    return {
+      background: styles.backgroundColor,
+      text: styles.color
+    };
+  });
+}
+
+function rgbValues(color) {
+  const values = color.match(/\d+(\.\d+)?/g).map(Number);
+
+  return values.slice(0, 3);
+}
+
+function luminance(color) {
+  const [red, green, blue] = rgbValues(color);
+
+  return (0.2126 * red) + (0.7152 * green) + (0.0722 * blue);
+}
+
+function expectLightTheme(colors) {
+  expect(luminance(colors.background)).toBeGreaterThan(220);
+  expect(luminance(colors.text)).toBeLessThan(80);
+}
+
+function expectDarkTheme(colors) {
+  expect(luminance(colors.background)).toBeLessThan(40);
+  expect(luminance(colors.text)).toBeGreaterThan(220);
+}
+
 test("FocusKit popup renders core features without console errors", async () => {
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "focuskit-smoke-"));
   const context = await chromium.launchPersistentContext(userDataDir, {
@@ -41,6 +74,8 @@ test("FocusKit popup renders core features without console errors", async () => 
     await page.goto(`chrome-extension://${extensionId}/popup.html`);
     await expect(page).toHaveURL(new RegExp(`^chrome-extension://${extensionId}/popup\\.html$`));
     await expect(page.locator("body")).toHaveClass(/theme-dark/);
+    const initialDarkColors = await readThemeColors(page);
+    expectDarkTheme(initialDarkColors);
 
     await expect(page.getByText("Pomodoro", { exact: true })).toBeVisible();
     await expect(page.getByText("Iris", { exact: true })).toBeVisible();
@@ -67,6 +102,10 @@ test("FocusKit popup renders core features without console errors", async () => 
     await page.locator(".setting-row", { hasText: "Sound effects" }).locator(".slider").click();
     await page.locator(".setting-row", { hasText: "Dark mode" }).locator(".slider").click();
     await expect(page.locator("body")).toHaveClass(/theme-light/);
+    const lightColors = await readThemeColors(page);
+    expectLightTheme(lightColors);
+    expect(lightColors.background).not.toBe(initialDarkColors.background);
+    expect(lightColors.text).not.toBe(initialDarkColors.text);
 
     await page.waitForFunction(() => new Promise(resolve => {
       chrome.storage.local.get(["notifications", "sound", "dark"], data => {
@@ -81,6 +120,7 @@ test("FocusKit popup renders core features without console errors", async () => 
     await expect(sound).toBeChecked();
     await expect(dark).not.toBeChecked();
     await expect(page.locator("body")).toHaveClass(/theme-light/);
+    expectLightTheme(await readThemeColors(page));
 
     await page.evaluate(() => new Promise(resolve => {
       chrome.storage.local.set({ dark: true }, resolve);
@@ -89,6 +129,10 @@ test("FocusKit popup renders core features without console errors", async () => 
     await page.getByRole("button", { name: "Settings" }).click();
     await expect(dark).toBeChecked();
     await expect(page.locator("body")).toHaveClass(/theme-dark/);
+    const restoredDarkColors = await readThemeColors(page);
+    expectDarkTheme(restoredDarkColors);
+    expect(restoredDarkColors.background).not.toBe(lightColors.background);
+    expect(restoredDarkColors.text).not.toBe(lightColors.text);
 
     await page.evaluate(() => new Promise(resolve => {
       chrome.storage.local.set({ dark: false }, resolve);
@@ -97,6 +141,7 @@ test("FocusKit popup renders core features without console errors", async () => 
     await page.getByRole("button", { name: "Settings" }).click();
     await expect(dark).not.toBeChecked();
     await expect(page.locator("body")).toHaveClass(/theme-light/);
+    expectLightTheme(await readThemeColors(page));
 
     expect(errors).toEqual([]);
   } finally {

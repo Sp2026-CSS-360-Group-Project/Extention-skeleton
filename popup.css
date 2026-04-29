@@ -1,25 +1,28 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-body.theme-dark {
-  --bg: #0f0f13;
-  --surface: #18181f;
-  --border: #2a2a35;
+:root,
+.theme-dark {
+  --bg: #050816;
+  --surface: #111827;
+  --panel: #111827;
+  --border: rgba(255, 255, 255, 0.12);
   --accent: #e8ff47;
   --accent2: #47d4ff;
-  --text: #f0f0f5;
-  --muted: #6b6b80;
+  --text: #f9fafb;
+  --muted: #9ca3af;
   --danger: #ff6b6b;
   --radius: 10px;
 }
 
-body.theme-light {
-  --bg: #f7f8ef;
+.theme-light {
+  --bg: #f8fafc;
   --surface: #ffffff;
-  --border: #d9ddcf;
-  --accent: #526800;
-  --accent2: #087d9e;
-  --text: #151711;
-  --muted: #6c7162;
+  --panel: #ffffff;
+  --border: rgba(17, 24, 39, 0.12);
+  --accent: #365314;
+  --accent2: #0369a1;
+  --text: #111827;
+  --muted: #4b5563;
   --danger: #b42318;
   --radius: 10px;
 }
@@ -34,7 +37,12 @@ body {
   overflow: hidden;
 }
 
-.app { display: flex; flex-direction: column; height: 100%; }
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  background: var(--bg);
+}
 
 /* Header */
 .header {

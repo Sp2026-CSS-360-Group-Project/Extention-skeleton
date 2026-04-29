@@ -1,6 +1,7 @@
 // popup.js - handles tab navigation, registry rendering, and persisted settings.
 
 const SETTING_KEYS = ["notifications", "sound", "dark"];
+const DEFAULT_DARK_MODE = true;
 
 const state = {
   selectedFocusCard: null
@@ -103,7 +104,7 @@ function renderFocusModes() {
 
 function loadSavedState() {
   chrome.storage.local.get([...SETTING_KEYS, "focusMode"], data => {
-    const isDarkMode = data.dark !== undefined ? data.dark : true;
+    const isDarkMode = resolveDarkMode(data.dark);
 
     applyTheme(isDarkMode);
 
@@ -146,6 +147,10 @@ function applyTheme(isDarkMode) {
   document.body.classList.toggle("theme-light", !isDarkMode);
 }
 
+function resolveDarkMode(savedValue) {
+  return savedValue !== undefined ? savedValue : DEFAULT_DARK_MODE;
+}
+
 function selectFocusMode(modeId, card, shouldPersist) {
   if (state.selectedFocusCard) {
     state.selectedFocusCard.classList.remove("selected");
@@ -172,5 +177,5 @@ function capitalize(value) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { settingKeyFromInput, capitalize, applyTheme };
+  module.exports = { settingKeyFromInput, capitalize, applyTheme, resolveDarkMode };
 }
