@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Chrome extension skeleton with unit tests",
   "scripts": {
-    "test": "jest"
+    "test": "jest --runInBand",
+    "smoke": "playwright test tests/smoke.extension.spec.js",
+    "check": "npm test && npm run smoke"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.40",
