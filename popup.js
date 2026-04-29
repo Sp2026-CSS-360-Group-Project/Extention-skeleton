@@ -103,6 +103,10 @@ function renderFocusModes() {
 
 function loadSavedState() {
   chrome.storage.local.get([...SETTING_KEYS, "focusMode"], data => {
+    const isDarkMode = data.dark !== undefined ? data.dark : true;
+
+    applyTheme(isDarkMode);
+
     SETTING_KEYS.forEach(key => {
       const input = document.getElementById(`setting${capitalize(key)}`);
 
@@ -110,6 +114,8 @@ function loadSavedState() {
         input.checked = data[key];
       }
     });
+
+    document.getElementById("settingDark").checked = isDarkMode;
 
     if (data.focusMode) {
       const savedCard = document.querySelector(`[data-mode-id="${data.focusMode}"]`);
@@ -124,9 +130,20 @@ function loadSavedState() {
 function setupSettingsPersistence() {
   document.querySelectorAll(".settings-list input[type=checkbox]").forEach(input => {
     input.addEventListener("change", () => {
-      chrome.storage.local.set({ [settingKeyFromInput(input)]: input.checked });
+      const key = settingKeyFromInput(input);
+
+      if (key === "dark") {
+        applyTheme(input.checked);
+      }
+
+      chrome.storage.local.set({ [key]: input.checked });
     });
   });
+}
+
+function applyTheme(isDarkMode) {
+  document.body.classList.toggle("theme-dark", isDarkMode);
+  document.body.classList.toggle("theme-light", !isDarkMode);
 }
 
 function selectFocusMode(modeId, card, shouldPersist) {
@@ -155,5 +172,5 @@ function capitalize(value) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { settingKeyFromInput, capitalize };
+  module.exports = { settingKeyFromInput, capitalize, applyTheme };
 }

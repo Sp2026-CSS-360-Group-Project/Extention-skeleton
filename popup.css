@@ -1,6 +1,6 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
+body.theme-dark {
   --bg: #0f0f13;
   --surface: #18181f;
   --border: #2a2a35;
@@ -9,6 +9,18 @@
   --text: #f0f0f5;
   --muted: #6b6b80;
   --danger: #ff6b6b;
+  --radius: 10px;
+}
+
+body.theme-light {
+  --bg: #f7f8ef;
+  --surface: #ffffff;
+  --border: #d9ddcf;
+  --accent: #526800;
+  --accent2: #087d9e;
+  --text: #151711;
+  --muted: #6c7162;
+  --danger: #b42318;
   --radius: 10px;
 }
 
@@ -131,6 +143,7 @@ body {
 
 .focus-card:hover { border-color: var(--accent2); }
 .focus-card.selected { border-color: var(--accent2); background: rgba(71,212,255,0.06); }
+body.theme-light .focus-card.selected { background: rgba(8,125,158,0.08); }
 
 .focus-header { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
 .focus-icon { font-size: 14px; }
@@ -168,4 +181,5 @@ body {
   transition: transform 0.2s, background 0.2s;
 }
 .toggle input:checked + .slider { background: rgba(232,255,71,0.2); }
+body.theme-light .toggle input:checked + .slider { background: rgba(82,104,0,0.18); }
 .toggle input:checked + .slider::before { transform: translateX(16px); background: var(--accent); }

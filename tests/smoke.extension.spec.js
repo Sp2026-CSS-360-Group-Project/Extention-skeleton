@@ -40,6 +40,7 @@ test("FocusKit popup renders core features without console errors", async () => 
 
     await page.goto(`chrome-extension://${extensionId}/popup.html`);
     await expect(page).toHaveURL(new RegExp(`^chrome-extension://${extensionId}/popup\\.html$`));
+    await expect(page.locator("body")).toHaveClass(/theme-dark/);
 
     await expect(page.getByText("Pomodoro", { exact: true })).toBeVisible();
     await expect(page.getByText("Iris", { exact: true })).toBeVisible();
@@ -60,9 +61,12 @@ test("FocusKit popup renders core features without console errors", async () => 
     const sound = page.locator("#settingSound");
     const dark = page.locator("#settingDark");
 
+    await expect(dark).toBeChecked();
+
     await page.locator(".setting-row", { hasText: "Notifications" }).locator(".slider").click();
     await page.locator(".setting-row", { hasText: "Sound effects" }).locator(".slider").click();
     await page.locator(".setting-row", { hasText: "Dark mode" }).locator(".slider").click();
+    await expect(page.locator("body")).toHaveClass(/theme-light/);
 
     await page.waitForFunction(() => new Promise(resolve => {
       chrome.storage.local.get(["notifications", "sound", "dark"], data => {
@@ -76,6 +80,23 @@ test("FocusKit popup renders core features without console errors", async () => 
     await expect(notifications).not.toBeChecked();
     await expect(sound).toBeChecked();
     await expect(dark).not.toBeChecked();
+    await expect(page.locator("body")).toHaveClass(/theme-light/);
+
+    await page.evaluate(() => new Promise(resolve => {
+      chrome.storage.local.set({ dark: true }, resolve);
+    }));
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: "Settings" }).click();
+    await expect(dark).toBeChecked();
+    await expect(page.locator("body")).toHaveClass(/theme-dark/);
+
+    await page.evaluate(() => new Promise(resolve => {
+      chrome.storage.local.set({ dark: false }, resolve);
+    }));
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: "Settings" }).click();
+    await expect(dark).not.toBeChecked();
+    await expect(page.locator("body")).toHaveClass(/theme-light/);
 
     expect(errors).toEqual([]);
   } finally {
