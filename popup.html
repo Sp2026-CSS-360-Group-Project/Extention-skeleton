@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FocusKit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">◈</span>
+        <span class="logo-text">FocusKit</span>
+      </div>
+      <div class="status-dot" id="statusDot"></div>
+    </header>
+
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="tools">Tools</button>
+      <button class="tab-btn" data-tab="focus">Focus</button>
+      <button class="tab-btn" data-tab="settings">Settings</button>
+    </nav>
+
+    <section class="tab-panel active" id="tab-tools">
+      <p class="section-label">TOOLS HUB</p>
+      <div class="tools-list" id="toolsList"></div>
+    </section>
+
+    <section class="tab-panel" id="tab-focus">
+      <p class="section-label">FOCUS MODE</p>
+      <div class="focus-modes" id="focusModes"></div>
+    </section>
+
+    <section class="tab-panel" id="tab-settings">
+      <p class="section-label">SETTINGS</p>
+      <div class="settings-list">
+        <div class="setting-row">
+          <span class="setting-label">Notifications</span>
+          <label class="toggle">
+            <input type="checkbox" id="settingNotifications" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Sound effects</span>
+          <label class="toggle">
+            <input type="checkbox" id="settingSound" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Dark mode</span>
+          <label class="toggle">
+            <input type="checkbox" id="settingDark" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Auto-start timer</span>
+          <label class="toggle">
+            <input type="checkbox" id="settingAutostart" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="tools.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
