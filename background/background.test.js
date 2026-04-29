@@ -107,10 +107,10 @@ function sendMessage(chrome, message) {
 
 describe("manifest background registration", () => {
   test("registers the MV3 service worker with required background permissions", () => {
-    const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "manifest.json"), "utf8"));
+    const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "manifest.json"), "utf8"));
 
     expect(manifest.manifest_version).toBe(3);
-    expect(manifest.background.service_worker).toBe("background.js");
+    expect(manifest.background.service_worker).toBe("background/background.js");
     expect(manifest.permissions).toEqual(expect.arrayContaining(["alarms", "notifications", "storage", "tabs"]));
   });
 });

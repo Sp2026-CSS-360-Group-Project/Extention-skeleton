@@ -2,13 +2,13 @@
 
 // Load shared Pomodoro state helpers when running as a Chrome service worker.
 if (typeof importScripts === "function" && typeof FocusKitPomodoroState === "undefined") {
-  importScripts("pomodoroState.js");
+  importScripts("../tools/pomodor-timer/pomodoroState.js");
 }
 
 // Reuse shared state helpers in Jest without duplicating timer rules in the worker.
 const pomodoroHelpers = typeof FocusKitPomodoroState !== "undefined"
   ? FocusKitPomodoroState
-  : require("./pomodoroState.js");
+  : require("../tools/pomodor-timer/pomodoroState.js");
 
 // Keep background command names centralized so popup and tests use one message surface.
 const POMODORO_ALARM_NAME = "focuskit:pomodoro";
