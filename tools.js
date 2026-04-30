@@ -1,5 +1,11 @@
 // tools.js - FocusKit runtime registry for popup-rendered productivity tools.
 
+// Import shared focus modes to avoid duplication across contexts.
+let focusModesModule;
+if (typeof require !== "undefined") {
+  focusModesModule = require("./tools/focus-modes/focusModes.js");
+}
+
 // Shared launch affordance for tools that update their button after activation.
 function markToolLaunched(button, label) {
   button.classList.add("active-tool");
@@ -45,8 +51,8 @@ const TOOLS = [
   }
 ];
 
-// Registry consumed by popup.js when building the Focus tab.
-const FOCUS_MODES = [
+// Use focus modes from focusModes.js if available, otherwise define locally for browser.
+const FOCUS_MODES = (focusModesModule && focusModesModule.FOCUS_MODES) || [
   {
     id: "deep-work",
     name: "Deep Work",

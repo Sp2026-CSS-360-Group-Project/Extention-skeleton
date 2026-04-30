@@ -5,10 +5,20 @@ if (typeof importScripts === "function" && typeof FocusKitPomodoroState === "und
   importScripts("../tools/pomodor-timer/pomodoroState.js");
 }
 
+// Load shared focus modes helpers when running as a Chrome service worker.
+if (typeof importScripts === "function" && typeof FocusKitFocusModes === "undefined") {
+  importScripts("../tools/focus-modes/focusModes.js");
+}
+
 // Reuse shared state helpers in Jest without duplicating timer rules in the worker.
 const pomodoroHelpers = typeof FocusKitPomodoroState !== "undefined"
   ? FocusKitPomodoroState
   : require("../tools/pomodor-timer/pomodoroState.js");
+
+// Reuse shared focus mode helpers in Jest without duplicating mode rules in the worker.
+const focusModeHelpers = typeof FocusKitFocusModes !== "undefined"
+  ? FocusKitFocusModes
+  : require("../tools/focus-modes/focusModes.js");
 
 // Keep background command names centralized so popup and tests use one message surface.
 const POMODORO_ALARM_NAME = "focuskit:pomodoro";
@@ -30,6 +40,12 @@ const {
   startPomodoro,
   tickPomodoro
 } = pomodoroHelpers;
+
+const {
+  FOCUS_MODES_STORAGE_KEY,
+  isValidFocusMode,
+  shouldMuteTabForMode
+} = focusModeHelpers;
 
 // Register service worker listeners only when Chrome APIs are available.
 if (typeof chrome !== "undefined" && chrome.runtime) {
@@ -217,13 +233,13 @@ function broadcastPomodoroState(state) {
 
 // Persist focus mode and apply lightweight tab control for deep-work style modes.
 async function applyFocusMode(modeId) {
-  if (typeof modeId !== "string" || !modeId) {
+  if (!isValidFocusMode(modeId)) {
     return { success: false, error: "Invalid focus mode" };
   }
 
-  await setStorage({ focusMode: modeId });
+  await setStorage({ [FOCUS_MODES_STORAGE_KEY]: modeId });
 
-  const shouldMuteActiveTab = modeId === "deep-work" || modeId === "study";
+  const shouldMuteActiveTab = shouldMuteTabForMode(modeId);
   const activeTab = await getActiveTab();
 
   if (activeTab && typeof activeTab.id === "number") {
