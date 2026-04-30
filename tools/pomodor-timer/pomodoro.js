@@ -80,6 +80,15 @@ function handlePomodoroStart() {
   sendBackgroundMessage({ action: "pomodoro:start" }, response => {
     handlePomodoroResponse(response);
   });
+
+  // Optimistic UI update: reflect running state immediately so the popup
+  // doesn't appear out-of-sync while the background service worker wakes.
+  try {
+    // Optimistically show running status while background handles alarms.
+    document.getElementById("pomodoroStatus").textContent = "Running";
+  } catch (e) {
+    // ignore
+  }
 }
 
 // Pause asks the background service worker to account for elapsed time.
@@ -87,6 +96,15 @@ function handlePomodoroPause() {
   sendBackgroundMessage({ action: "pomodoro:pause" }, response => {
     handlePomodoroResponse(response);
   });
+
+  // Optimistic UI update: pause immediately in the popup while background
+  // commits pause in storage.
+  try {
+    // Optimistically show paused status; final remaining time comes from storage.
+    document.getElementById("pomodoroStatus").textContent = "Paused";
+  } catch (e) {
+    // ignore
+  }
 }
 
 // Reset clears the background alarm and returns the UI to the default state.
@@ -94,6 +112,15 @@ function handlePomodoroReset() {
   sendBackgroundMessage({ action: "pomodoro:reset" }, response => {
     handlePomodoroResponse(response);
   });
+
+  // Optimistic UI update: reset the popup immediately.
+  try {
+    // Optimistically reset UI; authoritative state will be written by background.
+    document.getElementById("pomodoroStatus").textContent = "Paused";
+    document.getElementById("pomodoroTime").textContent = "25:00";
+  } catch (e) {
+    // ignore
+  }
 }
 
 // Refresh the visible popup display while the background alarm owns persistence.
@@ -165,6 +192,17 @@ if (typeof window !== "undefined") {
       handlePomodoroResponse({ success: true, state: message.state });
     }
   });
+
+  // Listen for direct storage changes as a robust fallback for UI sync when
+  // the background service worker broadcasts state before the popup's
+  // message handlers are available.
+  if (chrome && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "local" && changes.pomodoroState && changes.pomodoroState.newValue) {
+        handlePomodoroResponse({ success: true, state: changes.pomodoroState.newValue });
+      }
+    });
+  }
 }
 
 // Export pure timer helpers for Jest.
