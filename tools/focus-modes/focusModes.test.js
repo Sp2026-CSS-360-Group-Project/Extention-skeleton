@@ -1,61 +1,148 @@
-// focusModes.test.js - verifies focus mode definitions and utilities.
+// focusModes.test.js - Unit tests for the focus mode CRUD module.
 
-describe("focus modes registration", () => {
-  test("exports focus modes with required properties", () => {
-    const focusModes = require("./focusModes.js");
+// Minimal chrome.storage.local stub used across all tests.
+let store = {};
+global.chrome = {
+  storage: {
+    local: {
+      get: (keys, cb) => {
+        const result = {};
+        keys.forEach((k) => {
+          if (store[k] !== undefined) result[k] = store[k];
+        });
+        cb(result);
+      },
+      set: (values, cb) => {
+        Object.assign(store, values);
+        if (cb) cb();
+      },
+      remove: (key, cb) => {
+        delete store[key];
+        if (cb) cb();
+      }
+    }
+  }
+};
 
-    expect(focusModes.FOCUS_MODES_STORAGE_KEY).toBe("focusMode");
-    expect(Array.isArray(focusModes.FOCUS_MODES)).toBe(true);
-    expect(focusModes.FOCUS_MODES.length).toBeGreaterThanOrEqual(3);
+const {
+  FOCUS_MODES_STORAGE_KEY,
+  DEFAULT_FOCUS_MODES,
+  loadFocusModes,
+  createFocusMode,
+  updateFocusMode,
+  deleteFocusMode
+} = require("./focusModes");
 
-    focusModes.FOCUS_MODES.forEach(mode => {
-      expect(mode.id).toEqual(expect.any(String));
-      expect(mode.name).toEqual(expect.any(String));
-      expect(mode.icon).toEqual(expect.any(String));
-      expect(mode.desc).toEqual(expect.any(String));
-    });
-  });
+beforeEach(() => {
+  store = {};
+});
 
-  test("includes deep-work, study, and break focus modes", () => {
-    const { FOCUS_MODES } = require("./focusModes.js");
+// loadFocusModes ---------------------------------------------------------------
 
-    const modeIds = FOCUS_MODES.map(mode => mode.id);
-    expect(modeIds).toContain("deep-work");
-    expect(modeIds).toContain("study");
-    expect(modeIds).toContain("break");
+test("loadFocusModes seeds defaults on first run", (done) => {
+  loadFocusModes((modes) => {
+    expect(modes).toEqual(DEFAULT_FOCUS_MODES);
+    expect(store[FOCUS_MODES_STORAGE_KEY]).toEqual(DEFAULT_FOCUS_MODES);
+    done();
   });
 });
 
-describe("focus mode utilities", () => {
-  test("retrieves focus modes by id", () => {
-    const { getFocusModeById } = require("./focusModes.js");
-
-    const deepWork = getFocusModeById("deep-work");
-    expect(deepWork).toEqual(expect.objectContaining({
-      id: "deep-work",
-      name: "Deep Work"
-    }));
-
-    const notFound = getFocusModeById("nonexistent");
-    expect(notFound).toBeUndefined();
+test("loadFocusModes returns stored modes when present", (done) => {
+  const custom = [{ id: "x", name: "X", builtIn: false, enabledTools: [] }];
+  store[FOCUS_MODES_STORAGE_KEY] = custom;
+  loadFocusModes((modes) => {
+    expect(modes).toEqual(custom);
+    done();
   });
+});
 
-  test("validates focus mode ids", () => {
-    const { isValidFocusMode } = require("./focusModes.js");
+// createFocusMode --------------------------------------------------------------
 
-    expect(isValidFocusMode("deep-work")).toBe(true);
-    expect(isValidFocusMode("study")).toBe(true);
-    expect(isValidFocusMode("break")).toBe(true);
-    expect(isValidFocusMode("invalid")).toBe(false);
-    expect(isValidFocusMode("")).toBe(false);
+test("createFocusMode appends a new mode with a generated id", (done) => {
+  createFocusMode("Flow", "Get into flow.", ["pomodoro"], {}, (newMode, all) => {
+    expect(newMode.name).toBe("Flow");
+    expect(newMode.icon).toBe("F");
+    expect(newMode.builtIn).toBe(false);
+    expect(newMode.id).toMatch(/^custom-\d+$/);
+    expect(all).toHaveLength(DEFAULT_FOCUS_MODES.length + 1);
+    done();
   });
+});
 
-  test("determines tab muting for focus modes", () => {
-    const { shouldMuteTabForMode } = require("./focusModes.js");
+test("createFocusMode trims whitespace from name and desc", (done) => {
+  createFocusMode("  Sprint  ", "  Fast work.  ", [], {}, (newMode) => {
+    expect(newMode.name).toBe("Sprint");
+    expect(newMode.desc).toBe("Fast work.");
+    done();
+  });
+});
 
-    expect(shouldMuteTabForMode("deep-work")).toBe(true);
-    expect(shouldMuteTabForMode("study")).toBe(true);
-    expect(shouldMuteTabForMode("break")).toBe(false);
-    expect(shouldMuteTabForMode("invalid")).toBe(false);
+// updateFocusMode --------------------------------------------------------------
+
+test("updateFocusMode changes name without touching id or builtIn flag", (done) => {
+  store[FOCUS_MODES_STORAGE_KEY] = [...DEFAULT_FOCUS_MODES];
+  updateFocusMode("deep-work", { name: "Hyper Focus" }, (updated) => {
+    const mode = updated.find((m) => m.id === "deep-work");
+    expect(mode.name).toBe("Hyper Focus");
+    expect(mode.id).toBe("deep-work");
+    expect(mode.builtIn).toBe(true);
+    done();
+  });
+});
+
+test("updateFocusMode updates enabledTools on a custom mode", (done) => {
+  const custom = {
+    id: "custom-1",
+    name: "My Mode",
+    builtIn: false,
+    enabledTools: ["pomodoro"],
+    toolSettings: {}
+  };
+  store[FOCUS_MODES_STORAGE_KEY] = [custom];
+  updateFocusMode("custom-1", { enabledTools: ["pomodoro", "eisenhower"] }, (updated) => {
+    const mode = updated.find((m) => m.id === "custom-1");
+    expect(mode.enabledTools).toEqual(["pomodoro", "eisenhower"]);
+    done();
+  });
+});
+
+// deleteFocusMode --------------------------------------------------------------
+
+test("deleteFocusMode removes a custom mode", (done) => {
+  const custom = {
+    id: "custom-99",
+    name: "Temp",
+    builtIn: false,
+    enabledTools: []
+  };
+  store[FOCUS_MODES_STORAGE_KEY] = [...DEFAULT_FOCUS_MODES, custom];
+  deleteFocusMode("custom-99", (success, updated) => {
+    expect(success).toBe(true);
+    expect(updated.find((m) => m.id === "custom-99")).toBeUndefined();
+    done();
+  });
+});
+
+test("deleteFocusMode refuses to delete a built-in mode", (done) => {
+  store[FOCUS_MODES_STORAGE_KEY] = [...DEFAULT_FOCUS_MODES];
+  deleteFocusMode("deep-work", (success, updated) => {
+    expect(success).toBe(false);
+    expect(updated).toHaveLength(DEFAULT_FOCUS_MODES.length);
+    done();
+  });
+});
+
+test("deleteFocusMode clears active mode when the deleted mode was selected", (done) => {
+  const custom = {
+    id: "custom-55",
+    name: "Gone",
+    builtIn: false,
+    enabledTools: []
+  };
+  store[FOCUS_MODES_STORAGE_KEY] = [...DEFAULT_FOCUS_MODES, custom];
+  store["focusMode"] = "custom-55";
+  deleteFocusMode("custom-55", () => {
+    expect(store["focusMode"]).toBeUndefined();
+    done();
   });
 });
