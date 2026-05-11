@@ -9,7 +9,7 @@ const {
   restorePomodoroState,
   startPomodoro,
   tickPomodoro
-} = require("./pomodoro.js");
+} = require("./pomodoroState.js");
 
 describe("Pomodoro timer state", () => {
   test("initial state is 25:00 and paused", () => {
