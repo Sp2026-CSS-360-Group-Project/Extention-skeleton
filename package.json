@@ -5,11 +5,15 @@
   "scripts": {
     "test": "jest --runInBand",
     "smoke": "playwright test tests/smoke.extension.spec.js",
-    "check": "npm test && npm run smoke"
+    "check": "npm test && npm run smoke",
+    "lint": "node static-analysis/eslint.config.js",
+    "format": "prettier -c static-analysis/format.config.js .",
+    "typecheck": "tsc -p static-analysis/type.config.json"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@types/chrome": "^0.1.40",
+    "eslint": "^10.3.0",
     "jest": "^29.0.0",
     "jest-environment-jsdom": "^29.0.0"
   },
