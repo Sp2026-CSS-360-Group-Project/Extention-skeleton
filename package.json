@@ -6,9 +6,7 @@
     "test": "jest --runInBand",
     "smoke": "playwright test tests/smoke.extension.spec.js",
     "check": "npm test && npm run smoke",
-    "lint": "node static-analysis/eslint.config.js",
-    "format": "prettier -c static-analysis/format.config.js .",
-    "typecheck": "tsc -p static-analysis/type.config.json"
+    "lint": "node static-analysis/eslint.config.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
