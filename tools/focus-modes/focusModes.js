@@ -1,61 +1,156 @@
-// focusModes.js - shared focus mode definitions and utilities for popup and background.
+// focusModes.js - CRUD operations and storage for user-created focus modes.
 
-(() => {
-// Keep the storage key and mode definitions centralized across extension contexts.
 const FOCUS_MODES_STORAGE_KEY = "focusMode";
+const CRUD_STORAGE_KEY = "focusKit:focusModes";
+const ACTIVE_MODE_STORAGE_KEY = "focusMode";
 
-// Focus mode registry with metadata for rendering and tab control logic.
+// Built-in modes that ship with the extension. Users cannot delete these.
 const FOCUS_MODES = [
   {
     id: "deep-work",
     name: "Deep Work",
     icon: "D",
-    desc: "Long, distraction-light sessions for complex work."
+    desc: "Long, distraction-light sessions for complex work.",
+    builtIn: true,
+    enabledTools: ["pomodoro"],
+    toolSettings: {}
   },
   {
     id: "study",
     name: "Study",
     icon: "S",
-    desc: "Structured review mode for notes, reading, and practice."
+    desc: "Structured review mode for notes, reading, and practice.",
+    builtIn: true,
+    enabledTools: ["pomodoro", "eisenhower"],
+    toolSettings: {}
   },
   {
     id: "break",
     name: "Break",
     icon: "B",
-    desc: "A softer mode for resetting before the next session."
+    desc: "A softer mode for resetting before the next session.",
+    builtIn: true,
+    enabledTools: [],
+    toolSettings: {}
   }
 ];
+
+const DEFAULT_FOCUS_MODES = FOCUS_MODES;
 
 // Get a focus mode definition by id.
 function getFocusModeById(modeId) {
   return FOCUS_MODES.find(mode => mode.id === modeId);
 }
 
-// Check if a focus mode id is valid.
+// Check if a focus mode id is valid against the built-in registry.
 function isValidFocusMode(modeId) {
   return FOCUS_MODES.some(mode => mode.id === modeId);
 }
 
-// Determine if a focus mode should apply tab muting/control.
+// Determine if a focus mode should apply tab muting.
 function shouldMuteTabForMode(modeId) {
   return modeId === "deep-work" || modeId === "study";
 }
 
-// Share helpers with browser scripts loaded directly by popup.html and importScripts().
-const FocusKitFocusModes = {
-  FOCUS_MODES_STORAGE_KEY,
-  FOCUS_MODES,
-  getFocusModeById,
-  isValidFocusMode,
-  shouldMuteTabForMode
-};
+// Load all focus modes from storage, falling back to defaults when storage is empty.
+function loadFocusModes(callback) {
+  chrome.storage.local.get([CRUD_STORAGE_KEY], (data) => {
+    const stored = data[CRUD_STORAGE_KEY];
+    if (!Array.isArray(stored)) {
+      chrome.storage.local.set({ [CRUD_STORAGE_KEY]: DEFAULT_FOCUS_MODES }, () => {
+        callback(DEFAULT_FOCUS_MODES);
+      });
+    } else {
+      callback(stored);
+    }
+  });
+}
+
+// Persist the full modes array, then call back with the saved list.
+function saveFocusModes(modes, callback) {
+  chrome.storage.local.set({ [CRUD_STORAGE_KEY]: modes }, () => {
+    if (callback) callback(modes);
+  });
+}
+
+// Add a new user-created mode. Generates a unique id from the name + timestamp.
+function createFocusMode(name, desc, enabledTools, toolSettings, callback) {
+  const newMode = {
+    id: "custom-" + Date.now(),
+    name: name.trim(),
+    icon: name.trim().charAt(0).toUpperCase(),
+    desc: desc.trim(),
+    builtIn: false,
+    enabledTools: enabledTools || [],
+    toolSettings: toolSettings || {}
+  };
+  loadFocusModes((modes) => {
+    const updated = [...modes, newMode];
+    saveFocusModes(updated, () => callback(newMode, updated));
+  });
+}
+
+// Replace the fields of an existing mode by id. Built-in modes can be updated too.
+function updateFocusMode(modeId, changes, callback) {
+  loadFocusModes((modes) => {
+    const updated = modes.map((mode) => {
+      if (mode.id !== modeId) return mode;
+      return { ...mode, ...changes, id: mode.id, builtIn: mode.builtIn };
+    });
+    saveFocusModes(updated, () => callback(updated));
+  });
+}
+
+// Remove a user-created mode. Refuses to delete built-in modes.
+function deleteFocusMode(modeId, callback) {
+  loadFocusModes((modes) => {
+    const target = modes.find((m) => m.id === modeId);
+    if (!target || target.builtIn) {
+      if (callback) callback(false, modes);
+      return;
+    }
+    const updated = modes.filter((m) => m.id !== modeId);
+    chrome.storage.local.get([ACTIVE_MODE_STORAGE_KEY], (data) => {
+      const ops = [new Promise((res) => saveFocusModes(updated, res))];
+      if (data[ACTIVE_MODE_STORAGE_KEY] === modeId) {
+        ops.push(new Promise((res) => chrome.storage.local.remove(ACTIVE_MODE_STORAGE_KEY, res)));
+      }
+      Promise.all(ops).then(() => callback(true, updated));
+    });
+  });
+}
 
 if (typeof globalThis !== "undefined") {
-  globalThis.FocusKitFocusModes = FocusKitFocusModes;
+  globalThis.FocusKitModes = {
+    FOCUS_MODES_STORAGE_KEY,
+    CRUD_STORAGE_KEY,
+    FOCUS_MODES,
+    DEFAULT_FOCUS_MODES,
+    getFocusModeById,
+    isValidFocusMode,
+    shouldMuteTabForMode,
+    loadFocusModes,
+    saveFocusModes,
+    createFocusMode,
+    updateFocusMode,
+    deleteFocusMode
+  };
+  globalThis.FocusKitFocusModes = globalThis.FocusKitModes;
 }
 
-// Export pure focus mode helpers for Jest.
 if (typeof module !== "undefined") {
-  module.exports = FocusKitFocusModes;
+  module.exports = {
+    FOCUS_MODES_STORAGE_KEY,
+    CRUD_STORAGE_KEY,
+    FOCUS_MODES,
+    DEFAULT_FOCUS_MODES,
+    getFocusModeById,
+    isValidFocusMode,
+    shouldMuteTabForMode,
+    loadFocusModes,
+    saveFocusModes,
+    createFocusMode,
+    updateFocusMode,
+    deleteFocusMode
+  };
 }
-})();
