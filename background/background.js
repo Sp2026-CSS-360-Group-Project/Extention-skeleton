@@ -137,12 +137,17 @@ async function handleAlarm(alarm) {
     if (previousState.isRunning && previousState.remainingSeconds > 0) {
       // Notify for session end. Then check if a break phase is starting.
       await notifyPomodoroComplete();
+<<<<<<< background-service-worker
+      // Notify break start immediately after every completed session.
+      await notifyBreakStart();
+=======
 
       // If pomodoroState transitions into a break after completion, notify break start.
       // A break phase is indicated when the next cycle sets isBreak = true.
       if (nextState.isBreak) {
         await notifyBreakStart();
       }
+>>>>>>> main
     }
   }
 }
@@ -221,7 +226,9 @@ async function notifyPomodoroComplete() {
   await new Promise(resolve => {
     chrome.notifications.create(POMODORO_COMPLETE_NOTIFICATION_ID, {
       type: "basic",
-      iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYLlVAAAAW0lEQVR42u3QMQEAAAgDIN8/9K3hCGQKUpmZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtwY/QgAB2ndzLAAAAABJRU5ErkJggg==",
+      iconUrl: typeof chrome.runtime.getURL === "function"
+  ? chrome.runtime.getURL("icons/icon48.png")
+  : "icons/icon48.png",
       title: "Focus sprint complete",
       message: "Your Pomodoro is done. Take a short reset before the next block."
     }, () => resolve());
@@ -236,19 +243,34 @@ async function notifyBreakStart() {
     return;
   }
 
+<<<<<<< background-service-worker
+  // Clear the complete notification so only the break notification is visible.
+  if (chrome.notifications.clear) {
+    await new Promise(resolve => chrome.notifications.clear(POMODORO_COMPLETE_NOTIFICATION_ID, () => resolve()));
+  }
+=======
   // Clear the complete notification so the break one is the only one visible.
   await clearNotification(POMODORO_COMPLETE_NOTIFICATION_ID);
+>>>>>>> main
 
   await new Promise(resolve => {
     chrome.notifications.create(POMODORO_BREAK_NOTIFICATION_ID, {
       type: "basic",
+<<<<<<< background-service-worker
+      iconUrl: typeof chrome.runtime.getURL === "function"
+  ? chrome.runtime.getURL("icons/icon48.png")
+  : "icons/icon48.png",
+=======
       iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYLlVAAAAW0lEQVR42u3QMQEAAAgDIN8/9K3hCGQKUpmZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtwY/QgAB2ndzLAAAAABJRU5ErkJggg==",
+>>>>>>> main
       title: "Break time",
       message: "Good work. Step away, stretch, and come back refreshed."
     }, () => resolve());
   });
 }
 
+<<<<<<< background-service-worker
+=======
 // Safely clear a notification without throwing if it does not exist.
 function clearNotification(notificationId) {
   return new Promise(resolve => {
@@ -262,6 +284,7 @@ function clearNotification(notificationId) {
   });
 }
 
+>>>>>>> main
 // Broadcast state changes to any open popup without failing when no listener exists.
 function broadcastPomodoroState(state) {
   chrome.runtime.sendMessage({ action: "pomodoro:stateChanged", state }, () => {
