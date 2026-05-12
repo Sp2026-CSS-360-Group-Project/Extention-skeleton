@@ -86,7 +86,7 @@ function handleMessage(message, sender, sendResponse) {
       sendResponse({
         success: false,
         error: error.message || "Background request failed",
-      })
+      }),
     );
 
   return true;
@@ -210,7 +210,7 @@ function createPomodoroAlarm(remainingSeconds) {
 
   return new Promise((resolve) => {
     chrome.alarms.create(POMODORO_ALARM_NAME, { delayInMinutes }, () =>
-      resolve()
+      resolve(),
     );
   });
 }
@@ -246,7 +246,7 @@ async function notifyPomodoroComplete() {
         message:
           "Your Pomodoro is done. Take a short reset before the next block.",
       },
-      () => resolve()
+      () => resolve(),
     );
   });
 }
@@ -272,7 +272,7 @@ async function notifyBreakStart() {
         title: "Break time",
         message: "Good work. Step away, stretch, and come back refreshed.",
       },
-      () => resolve()
+      () => resolve(),
     );
   });
 }
@@ -357,7 +357,7 @@ function broadcastFocusModeApplied(modeId, enabledTools) {
     { action: "focus:modeApplied", modeId, enabledTools },
     () => {
       void chrome.runtime.lastError;
-    }
+    },
   );
 }
 
@@ -365,7 +365,7 @@ function broadcastFocusModeApplied(modeId, enabledTools) {
 function getActiveTab() {
   return new Promise((resolve) => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) =>
-      resolve(tabs[0] || null)
+      resolve(tabs[0] || null),
     );
   });
 }

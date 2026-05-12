@@ -59,7 +59,7 @@ function createChromeMock(initialStorage = {}) {
         get: jest.fn((keys, callback) => {
           if (Array.isArray(keys)) {
             callback(
-              Object.fromEntries(keys.map((key) => [key, storage[key]]))
+              Object.fromEntries(keys.map((key) => [key, storage[key]])),
             );
             return;
           }
@@ -110,13 +110,13 @@ function sendMessage(chrome, message) {
 describe("manifest background registration", () => {
   test("registers the MV3 service worker with required background permissions", () => {
     const manifest = JSON.parse(
-      fs.readFileSync(path.join(__dirname, "..", "manifest.json"), "utf8")
+      fs.readFileSync(path.join(__dirname, "..", "manifest.json"), "utf8"),
     );
 
     expect(manifest.manifest_version).toBe(3);
     expect(manifest.background.service_worker).toBe("background/background.js");
     expect(manifest.permissions).toEqual(
-      expect.arrayContaining(["alarms", "notifications", "storage", "tabs"])
+      expect.arrayContaining(["alarms", "notifications", "storage", "tabs"]),
     );
   });
 });
@@ -152,7 +152,7 @@ describe("FocusKit background service worker", () => {
     expect(chrome.alarms.create).toHaveBeenCalledWith(
       "focuskit:pomodoro",
       { delayInMinutes: 25 },
-      expect.any(Function)
+      expect.any(Function),
     );
 
     Date.now.mockReturnValue(61000);
@@ -161,7 +161,7 @@ describe("FocusKit background service worker", () => {
     expect(paused.state.remainingSeconds).toBe(1440);
     expect(chrome.alarms.clear).toHaveBeenCalledWith(
       "focuskit:pomodoro",
-      expect.any(Function)
+      expect.any(Function),
     );
 
     const reset = await sendMessage(chrome, { action: "pomodoro:reset" });
@@ -195,14 +195,14 @@ describe("FocusKit background service worker", () => {
         type: "basic",
         title: "Focus sprint complete",
       }),
-      expect.any(Function)
+      expect.any(Function),
     );
     expect(chrome.runtime.sendMessage).toHaveBeenCalledWith(
       {
         action: "pomodoro:stateChanged",
         state: chrome.__storage.pomodoroState,
       },
-      expect.any(Function)
+      expect.any(Function),
     );
 
     Date.now.mockRestore();
@@ -220,12 +220,12 @@ describe("FocusKit background service worker", () => {
     expect(chrome.__storage.focusMode).toBe("deep-work");
     expect(chrome.tabs.query).toHaveBeenCalledWith(
       { active: true, currentWindow: true },
-      expect.any(Function)
+      expect.any(Function),
     );
     expect(chrome.tabs.update).toHaveBeenCalledWith(
       42,
       { muted: true },
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 });
