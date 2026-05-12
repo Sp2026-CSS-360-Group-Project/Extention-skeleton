@@ -1,19 +1,24 @@
 // background.js - MV3 service worker for timers, notifications, tabs, and popup messages.
 
 // Load shared Pomodoro state helpers when running as a Chrome service worker.
-if (typeof importScripts === "function" && typeof FocusKitPomodoroState === "undefined") {
+if (
+  typeof importScripts === "function" &&
+  typeof FocusKitPomodoroState === "undefined"
+) {
   importScripts("../tools/pomodor-timer/pomodoroState.js");
   importScripts("../tools/focus-modes/focusModes.js");
 }
 
 // Reuse shared state helpers in Jest without duplicating timer rules in the worker.
-const pomodoroHelpers = typeof FocusKitPomodoroState !== "undefined"
-  ? FocusKitPomodoroState
-  : require("../tools/pomodor-timer/pomodoroState.js");
+const pomodoroHelpers =
+  typeof FocusKitPomodoroState !== "undefined"
+    ? FocusKitPomodoroState
+    : require("../tools/pomodor-timer/pomodoroState.js");
 
-const focusModeHelpers = typeof FocusKitModes !== "undefined"
-  ? FocusKitModes
-  : require("../tools/focus-modes/focusModes.js");
+const focusModeHelpers =
+  typeof FocusKitModes !== "undefined"
+    ? FocusKitModes
+    : require("../tools/focus-modes/focusModes.js");
 
 // Keep background command names centralized so popup and tests use one message surface.
 const POMODORO_ALARM_NAME = "focuskit:pomodoro";
@@ -27,7 +32,7 @@ const MESSAGE_ACTIONS = {
   pomodoroStart: "pomodoro:start",
   pomodoroPause: "pomodoro:pause",
   pomodoroReset: "pomodoro:reset",
-  focusSetMode: "focus:setMode"
+  focusSetMode: "focus:setMode",
 };
 
 const {
@@ -36,7 +41,7 @@ const {
   resetPomodoro,
   restorePomodoroState,
   startPomodoro,
-  tickPomodoro
+  tickPomodoro,
 } = pomodoroHelpers;
 
 const { loadFocusModes, FOCUS_MODES_STORAGE_KEY } = focusModeHelpers;
@@ -54,7 +59,7 @@ async function handleInstalled(details = {}) {
   await setStorage({
     installed: true,
     lifecycleEvent: details.reason || "unknown",
-    lastLifecycleAt: Date.now()
+    lastLifecycleAt: Date.now(),
   });
   await syncPomodoroAlarm();
 }
@@ -63,7 +68,7 @@ async function handleInstalled(details = {}) {
 async function handleStartup() {
   await setStorage({
     lifecycleEvent: "startup",
-    lastLifecycleAt: Date.now()
+    lastLifecycleAt: Date.now(),
   });
   await syncPomodoroAlarm();
 }
@@ -77,10 +82,12 @@ function handleMessage(message, sender, sendResponse) {
 
   handleMessageAsync(message)
     .then(sendResponse)
-    .catch(error => sendResponse({
-      success: false,
-      error: error.message || "Background request failed"
-    }));
+    .catch((error) =>
+      sendResponse({
+        success: false,
+        error: error.message || "Background request failed",
+      })
+    );
 
   return true;
 }
@@ -96,11 +103,17 @@ async function handleMessageAsync(message) {
   }
 
   if (message.action === MESSAGE_ACTIONS.pomodoroStart) {
-    return { success: true, state: await updatePomodoroState(startPomodoro, true) };
+    return {
+      success: true,
+      state: await updatePomodoroState(startPomodoro, true),
+    };
   }
 
   if (message.action === MESSAGE_ACTIONS.pomodoroPause) {
-    return { success: true, state: await updatePomodoroState(pausePomodoro, false) };
+    return {
+      success: true,
+      state: await updatePomodoroState(pausePomodoro, false),
+    };
   }
 
   if (message.action === MESSAGE_ACTIONS.pomodoroReset) {
@@ -182,7 +195,7 @@ async function readPomodoroState() {
 
 // Keep the alarm schedule aligned with persisted timer state after lifecycle events.
 async function syncPomodoroAlarm(state) {
-  const currentState = state || await readPomodoroState();
+  const currentState = state || (await readPomodoroState());
 
   if (currentState.isRunning) {
     await createPomodoroAlarm(currentState.remainingSeconds);
@@ -195,14 +208,16 @@ async function syncPomodoroAlarm(state) {
 function createPomodoroAlarm(remainingSeconds) {
   const delayInMinutes = Math.max(1 / 60, remainingSeconds / 60);
 
-  return new Promise(resolve => {
-    chrome.alarms.create(POMODORO_ALARM_NAME, { delayInMinutes }, () => resolve());
+  return new Promise((resolve) => {
+    chrome.alarms.create(POMODORO_ALARM_NAME, { delayInMinutes }, () =>
+      resolve()
+    );
   });
 }
 
 // Clear timer alarms whenever the timer pauses, resets, or completes.
 function clearPomodoroAlarm() {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     chrome.alarms.clear(POMODORO_ALARM_NAME, () => resolve());
   });
 }
@@ -218,15 +233,21 @@ async function notifyPomodoroComplete() {
   // Clear any stale break notification before showing the complete one.
   await clearNotification(POMODORO_BREAK_NOTIFICATION_ID);
 
-  await new Promise(resolve => {
-    chrome.notifications.create(POMODORO_COMPLETE_NOTIFICATION_ID, {
-      type: "basic",
-      iconUrl: typeof chrome.runtime.getURL === "function"
-  ? chrome.runtime.getURL("icons/icon48.png")
-  : "icons/icon48.png",
-      title: "Focus sprint complete",
-      message: "Your Pomodoro is done. Take a short reset before the next block."
-    }, () => resolve());
+  await new Promise((resolve) => {
+    chrome.notifications.create(
+      POMODORO_COMPLETE_NOTIFICATION_ID,
+      {
+        type: "basic",
+        iconUrl:
+          typeof chrome.runtime.getURL === "function"
+            ? chrome.runtime.getURL("icons/icon48.png")
+            : "icons/icon48.png",
+        title: "Focus sprint complete",
+        message:
+          "Your Pomodoro is done. Take a short reset before the next block.",
+      },
+      () => resolve()
+    );
   });
 }
 
@@ -241,19 +262,24 @@ async function notifyBreakStart() {
   // Clear the complete notification so the break one is the only one visible.
   await clearNotification(POMODORO_COMPLETE_NOTIFICATION_ID);
 
-  await new Promise(resolve => {
-    chrome.notifications.create(POMODORO_BREAK_NOTIFICATION_ID, {
-      type: "basic",
-      iconUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYLlVAAAAW0lEQVR42u3QMQEAAAgDIN8/9K3hCGQKUpmZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtwY/QgAB2ndzLAAAAABJRU5ErkJggg==",
-      title: "Break time",
-      message: "Good work. Step away, stretch, and come back refreshed."
-    }, () => resolve());
+  await new Promise((resolve) => {
+    chrome.notifications.create(
+      POMODORO_BREAK_NOTIFICATION_ID,
+      {
+        type: "basic",
+        iconUrl:
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYLlVAAAAW0lEQVR42u3QMQEAAAgDIN8/9K3hCGQKUpmZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtwY/QgAB2ndzLAAAAABJRU5ErkJggg==",
+        title: "Break time",
+        message: "Good work. Step away, stretch, and come back refreshed.",
+      },
+      () => resolve()
+    );
   });
 }
 
 // Safely clear a notification without throwing if it does not exist.
 function clearNotification(notificationId) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     // chrome.notifications.clear may be absent in Jest stubs, so we check
     // before calling to keep tests passing without modifying the test file.
     if (chrome.notifications.clear) {
@@ -312,13 +338,13 @@ async function applyFocusMode(modeId) {
     success: true,
     modeId,
     enabledTools,
-    tabControlled: Boolean(activeTab)
+    tabControlled: Boolean(activeTab),
   };
 }
 
 // Look up a mode definition from storage by id, returning null if not found.
 function resolveModeById(modeId) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     loadFocusModes((modes) => {
       resolve(modes.find((m) => m.id === modeId) || null);
     });
@@ -329,34 +355,38 @@ function resolveModeById(modeId) {
 function broadcastFocusModeApplied(modeId, enabledTools) {
   chrome.runtime.sendMessage(
     { action: "focus:modeApplied", modeId, enabledTools },
-    () => { void chrome.runtime.lastError; }
+    () => {
+      void chrome.runtime.lastError;
+    }
   );
 }
 
 // Query the current active tab for focus enforcement actions.
 function getActiveTab() {
-  return new Promise(resolve => {
-    chrome.tabs.query({ active: true, currentWindow: true }, tabs => resolve(tabs[0] || null));
+  return new Promise((resolve) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) =>
+      resolve(tabs[0] || null)
+    );
   });
 }
 
 // Wrap tab updates so focus behavior is testable and service-worker friendly.
 function updateTab(tabId, properties) {
-  return new Promise(resolve => {
-    chrome.tabs.update(tabId, properties, tab => resolve(tab));
+  return new Promise((resolve) => {
+    chrome.tabs.update(tabId, properties, (tab) => resolve(tab));
   });
 }
 
 // Promise wrapper for chrome.storage.local.get.
 function getStorage(keys) {
-  return new Promise(resolve => {
-    chrome.storage.local.get(keys, data => resolve(data || {}));
+  return new Promise((resolve) => {
+    chrome.storage.local.get(keys, (data) => resolve(data || {}));
   });
 }
 
 // Promise wrapper for chrome.storage.local.set.
 function setStorage(values) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     chrome.storage.local.set(values, () => resolve());
   });
 }
@@ -375,6 +405,6 @@ if (typeof module !== "undefined") {
     handleMessageAsync,
     handleStartup,
     notifyBreakStart,
-    notifyPomodoroComplete
+    notifyPomodoroComplete,
   };
 }

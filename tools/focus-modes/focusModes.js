@@ -13,7 +13,7 @@ const DEFAULT_FOCUS_MODES = [
     desc: "Long, distraction-light sessions for complex work.",
     builtIn: true,
     enabledTools: ["pomodoro"],
-    toolSettings: {}
+    toolSettings: {},
   },
   {
     id: "study",
@@ -22,7 +22,7 @@ const DEFAULT_FOCUS_MODES = [
     desc: "Structured review mode for notes, reading, and practice.",
     builtIn: true,
     enabledTools: ["pomodoro", "eisenhower"],
-    toolSettings: {}
+    toolSettings: {},
   },
   {
     id: "break",
@@ -31,8 +31,8 @@ const DEFAULT_FOCUS_MODES = [
     desc: "Doomscrolling Time!",
     builtIn: true,
     enabledTools: [],
-    toolSettings: {}
-  }
+    toolSettings: {},
+  },
 ];
 
 // Load all focus modes from storage, falling back to defaults when storage is empty.
@@ -41,9 +41,12 @@ function loadFocusModes(callback) {
     const stored = data[FOCUS_MODES_STORAGE_KEY];
     // First run: seed storage with defaults so future saves merge correctly.
     if (!Array.isArray(stored)) {
-      chrome.storage.local.set({ [FOCUS_MODES_STORAGE_KEY]: DEFAULT_FOCUS_MODES }, () => {
-        callback(DEFAULT_FOCUS_MODES);
-      });
+      chrome.storage.local.set(
+        { [FOCUS_MODES_STORAGE_KEY]: DEFAULT_FOCUS_MODES },
+        () => {
+          callback(DEFAULT_FOCUS_MODES);
+        }
+      );
     } else {
       callback(stored);
     }
@@ -66,7 +69,7 @@ function createFocusMode(name, desc, enabledTools, toolSettings, callback) {
     desc: desc.trim(),
     builtIn: false,
     enabledTools: enabledTools || [],
-    toolSettings: toolSettings || {}
+    toolSettings: toolSettings || {},
   };
 
   loadFocusModes((modes) => {
@@ -85,7 +88,7 @@ function updateFocusMode(modeId, changes, callback) {
         ...changes,
         // Keep id and builtIn flag immutable.
         id: mode.id,
-        builtIn: mode.builtIn
+        builtIn: mode.builtIn,
       };
     });
     saveFocusModes(updated, () => callback(updated));
@@ -125,7 +128,7 @@ if (typeof window !== "undefined") {
     saveFocusModes,
     createFocusMode,
     updateFocusMode,
-    deleteFocusMode
+    deleteFocusMode,
   };
 }
 
@@ -137,6 +140,6 @@ if (typeof module !== "undefined") {
     saveFocusModes,
     createFocusMode,
     updateFocusMode,
-    deleteFocusMode
+    deleteFocusMode,
   };
 }

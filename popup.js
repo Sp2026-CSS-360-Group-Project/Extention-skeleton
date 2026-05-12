@@ -6,7 +6,7 @@ const DEFAULT_DARK_MODE = true;
 
 // Track the selected DOM card so only one focus mode appears active at a time.
 const state = {
-  selectedFocusCard: null
+  selectedFocusCard: null,
 };
 
 // Initialize the popup once Chrome has loaded the extension document.
@@ -24,13 +24,17 @@ function setupTabs() {
   const buttons = document.querySelectorAll(".tab-btn");
   const panels = document.querySelectorAll(".tab-panel");
 
-  buttons.forEach(button => {
+  buttons.forEach((button) => {
     button.addEventListener("click", () => {
-      buttons.forEach(currentButton => currentButton.classList.remove("active"));
-      panels.forEach(panel => panel.classList.remove("active"));
+      buttons.forEach((currentButton) =>
+        currentButton.classList.remove("active")
+      );
+      panels.forEach((panel) => panel.classList.remove("active"));
 
       button.classList.add("active");
-      document.getElementById(`tab-${button.dataset.tab}`).classList.add("active");
+      document
+        .getElementById(`tab-${button.dataset.tab}`)
+        .classList.add("active");
     });
   });
 }
@@ -40,7 +44,7 @@ function renderTools() {
   const container = document.getElementById("toolsList");
   container.replaceChildren();
 
-  window.TOOLS.forEach(tool => {
+  window.TOOLS.forEach((tool) => {
     const card = document.createElement("div");
     card.className = "tool-card";
 
@@ -93,7 +97,7 @@ function renderFocusModes(modes) {
   const container = document.getElementById("focusModes");
   container.replaceChildren();
 
-  modes.forEach(mode => {
+  modes.forEach((mode) => {
     container.appendChild(buildModeCard(mode));
   });
 
@@ -106,9 +110,11 @@ function renderFocusModes(modes) {
   container.appendChild(addButton);
 
   // Re-apply the saved selection highlight after a re-render.
-  chrome.storage.local.get(["focusMode"], data => {
+  chrome.storage.local.get(["focusMode"], (data) => {
     if (data.focusMode) {
-      const savedCard = container.querySelector(`[data-mode-id="${data.focusMode}"]`);
+      const savedCard = container.querySelector(
+        `[data-mode-id="${data.focusMode}"]`
+      );
       if (savedCard) selectFocusMode(data.focusMode, savedCard, false);
     }
   });
@@ -182,7 +188,7 @@ function openModeForm(existingMode) {
   const existing = document.getElementById("focusModeForm");
   if (existing) existing.remove();
 
-  const allToolIds = (window.TOOLS || []).map(t => t.id);
+  const allToolIds = (window.TOOLS || []).map((t) => t.id);
   const currentEnabled = existingMode ? existingMode.enabledTools || [] : [];
 
   const overlay = document.createElement("div");
@@ -190,7 +196,10 @@ function openModeForm(existingMode) {
   overlay.className = "focus-form-overlay";
   overlay.setAttribute("role", "dialog");
   overlay.setAttribute("aria-modal", "true");
-  overlay.setAttribute("aria-label", existingMode ? "Edit focus mode" : "New focus mode");
+  overlay.setAttribute(
+    "aria-label",
+    existingMode ? "Edit focus mode" : "New focus mode"
+  );
 
   const form = document.createElement("div");
   form.className = "focus-form";
@@ -232,8 +241,8 @@ function openModeForm(existingMode) {
   const toolsGroup = document.createElement("div");
   toolsGroup.className = "focus-form-tools";
 
-  allToolIds.forEach(toolId => {
-    const toolDef = (window.TOOLS || []).find(t => t.id === toolId);
+  allToolIds.forEach((toolId) => {
+    const toolDef = (window.TOOLS || []).find((t) => t.id === toolId);
     const row = document.createElement("label");
     row.className = "focus-form-tool-row";
     const checkbox = document.createElement("input");
@@ -278,9 +287,11 @@ function openModeForm(existingMode) {
     }
     errorMsg.hidden = true;
 
-    const enabledTools = Array.from(toolsGroup.querySelectorAll("input[type=checkbox]"))
-      .filter(cb => cb.checked)
-      .map(cb => cb.value);
+    const enabledTools = Array.from(
+      toolsGroup.querySelectorAll("input[type=checkbox]")
+    )
+      .filter((cb) => cb.checked)
+      .map((cb) => cb.value);
 
     if (existingMode) {
       window.FocusKitModes.updateFocusMode(
@@ -306,7 +317,17 @@ function openModeForm(existingMode) {
   });
 
   buttonRow.append(saveBtn, cancelBtn);
-  form.append(titleRow, nameLabel, nameInput, descLabel, descInput, toolsLabel, toolsGroup, errorMsg, buttonRow);
+  form.append(
+    titleRow,
+    nameLabel,
+    nameInput,
+    descLabel,
+    descInput,
+    toolsLabel,
+    toolsGroup,
+    errorMsg,
+    buttonRow
+  );
   overlay.appendChild(form);
 
   document.getElementById("tab-focus").appendChild(overlay);
@@ -364,12 +385,12 @@ function confirmDeleteMode(mode) {
 
 // Restore checkbox values, theme, and the selected focus mode from chrome.storage.
 function loadSavedState() {
-  chrome.storage.local.get([...SETTING_KEYS, "focusMode"], data => {
+  chrome.storage.local.get([...SETTING_KEYS, "focusMode"], (data) => {
     const isDarkMode = resolveDarkMode(data.dark);
 
     applyTheme(isDarkMode);
 
-    SETTING_KEYS.forEach(key => {
+    SETTING_KEYS.forEach((key) => {
       const input = document.getElementById(`setting${capitalize(key)}`);
 
       if (input && data[key] !== undefined) {
@@ -380,7 +401,9 @@ function loadSavedState() {
     document.getElementById("settingDark").checked = isDarkMode;
 
     if (data.focusMode) {
-      const savedCard = document.querySelector(`[data-mode-id="${data.focusMode}"]`);
+      const savedCard = document.querySelector(
+        `[data-mode-id="${data.focusMode}"]`
+      );
 
       if (savedCard) {
         selectFocusMode(data.focusMode, savedCard, false);
@@ -391,17 +414,19 @@ function loadSavedState() {
 
 // Persist settings as soon as users toggle them, applying theme changes immediately.
 function setupSettingsPersistence() {
-  document.querySelectorAll(".settings-list input[type=checkbox]").forEach(input => {
-    input.addEventListener("change", () => {
-      const key = settingKeyFromInput(input);
+  document
+    .querySelectorAll(".settings-list input[type=checkbox]")
+    .forEach((input) => {
+      input.addEventListener("change", () => {
+        const key = settingKeyFromInput(input);
 
-      if (key === "dark") {
-        applyTheme(input.checked);
-      }
+        if (key === "dark") {
+          applyTheme(input.checked);
+        }
 
-      chrome.storage.local.set({ [key]: input.checked });
+        chrome.storage.local.set({ [key]: input.checked });
+      });
     });
-  });
 }
 
 // Keep the popup in sync when the background applies a mode while the popup is open.
@@ -416,7 +441,7 @@ function listenForBackgroundMessages() {
 
 // Apply theme classes to both roots used by the popup CSS.
 function applyTheme(isDarkMode) {
-  document.querySelectorAll("body, .app").forEach(themeRoot => {
+  document.querySelectorAll("body, .app").forEach((themeRoot) => {
     themeRoot.classList.toggle("theme-dark", isDarkMode);
     themeRoot.classList.toggle("theme-light", !isDarkMode);
   });
@@ -458,5 +483,10 @@ function capitalize(value) {
 
 // Export pure helpers for Jest while leaving the popup globals untouched in Chrome.
 if (typeof module !== "undefined") {
-  module.exports = { settingKeyFromInput, capitalize, applyTheme, resolveDarkMode };
+  module.exports = {
+    settingKeyFromInput,
+    capitalize,
+    applyTheme,
+    resolveDarkMode,
+  };
 }
