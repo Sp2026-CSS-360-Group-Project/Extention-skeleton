@@ -1,9 +1,10 @@
 // pomodoro.js - FocusKit Pomodoro timer state and popup UI.
 
 // Load shared timer helpers from pomodoroState.js in Chrome and from require() in Jest.
-const pomodoroStateHelpers = typeof FocusKitPomodoroState !== "undefined"
-  ? FocusKitPomodoroState
-  : require("./pomodoroState.js");
+const pomodoroStateHelpers =
+  typeof FocusKitPomodoroState !== "undefined"
+    ? FocusKitPomodoroState
+    : require("./pomodoroState.js");
 
 const {
   createInitialPomodoroState,
@@ -12,7 +13,7 @@ const {
   resetPomodoro,
   restorePomodoroState,
   startPomodoro,
-  tickPomodoro
+  tickPomodoro,
 } = pomodoroStateHelpers;
 
 // Mutable popup session state; pure helpers below make this easy to test separately.
@@ -67,17 +68,25 @@ function getPomodoroPanel() {
 
   // Bind controls once when the panel is first created.
   document.getElementById("tab-tools").appendChild(panel);
-  panel.querySelector("#pomodoroStart").addEventListener("click", handlePomodoroStart);
-  panel.querySelector("#pomodoroPause").addEventListener("click", handlePomodoroPause);
-  panel.querySelector("#pomodoroReset").addEventListener("click", handlePomodoroReset);
-  panel.querySelector("#pomodoroClose").addEventListener("click", closePomodoroPanel);
+  panel
+    .querySelector("#pomodoroStart")
+    .addEventListener("click", handlePomodoroStart);
+  panel
+    .querySelector("#pomodoroPause")
+    .addEventListener("click", handlePomodoroPause);
+  panel
+    .querySelector("#pomodoroReset")
+    .addEventListener("click", handlePomodoroReset);
+  panel
+    .querySelector("#pomodoroClose")
+    .addEventListener("click", closePomodoroPanel);
 
   return panel;
 }
 
 // Start delegates timer ownership to the background service worker.
 function handlePomodoroStart() {
-  sendBackgroundMessage({ action: "pomodoro:start" }, response => {
+  sendBackgroundMessage({ action: "pomodoro:start" }, (response) => {
     handlePomodoroResponse(response);
   });
 
@@ -93,7 +102,7 @@ function handlePomodoroStart() {
 
 // Pause asks the background service worker to account for elapsed time.
 function handlePomodoroPause() {
-  sendBackgroundMessage({ action: "pomodoro:pause" }, response => {
+  sendBackgroundMessage({ action: "pomodoro:pause" }, (response) => {
     handlePomodoroResponse(response);
   });
 
@@ -109,7 +118,7 @@ function handlePomodoroPause() {
 
 // Reset clears the background alarm and returns the UI to the default state.
 function handlePomodoroReset() {
-  sendBackgroundMessage({ action: "pomodoro:reset" }, response => {
+  sendBackgroundMessage({ action: "pomodoro:reset" }, (response) => {
     handlePomodoroResponse(response);
   });
 
@@ -146,7 +155,7 @@ function stopPomodoroInterval() {
 
 // Load current state from the background so reopened popups reflect elapsed time.
 function loadPomodoroState() {
-  sendBackgroundMessage({ action: "pomodoro:getState" }, response => {
+  sendBackgroundMessage({ action: "pomodoro:getState" }, (response) => {
     handlePomodoroResponse(response);
   });
 }
@@ -169,7 +178,7 @@ function handlePomodoroResponse(response) {
 
 // Send background commands through the MV3 message channel.
 function sendBackgroundMessage(message, callback) {
-  chrome.runtime.sendMessage(message, response => {
+  chrome.runtime.sendMessage(message, (response) => {
     callback(response);
   });
 }
@@ -177,17 +186,21 @@ function sendBackgroundMessage(message, callback) {
 // Render the current timer value and running/paused label.
 function renderPomodoro(state) {
   getPomodoroPanel();
-  document.getElementById("pomodoroTime").textContent = formatTime(state.remainingSeconds);
-  document.getElementById("pomodoroStatus").textContent = state.isRunning ? "Running" : "Paused";
+  document.getElementById("pomodoroTime").textContent = formatTime(
+    state.remainingSeconds,
+  );
+  document.getElementById("pomodoroStatus").textContent = state.isRunning
+    ? "Running"
+    : "Paused";
 }
 
 // Expose the launcher for tools.js in the browser runtime.
 if (typeof window !== "undefined") {
   window.FocusKitPomodoro = {
-    open: openPomodoroPanel
+    open: openPomodoroPanel,
   };
 
-  chrome.runtime.onMessage.addListener(message => {
+  chrome.runtime.onMessage.addListener((message) => {
     if (message && message.action === "pomodoro:stateChanged") {
       handlePomodoroResponse({ success: true, state: message.state });
     }
@@ -198,8 +211,15 @@ if (typeof window !== "undefined") {
   // message handlers are available.
   if (chrome && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === "local" && changes.pomodoroState && changes.pomodoroState.newValue) {
-        handlePomodoroResponse({ success: true, state: changes.pomodoroState.newValue });
+      if (
+        area === "local" &&
+        changes.pomodoroState &&
+        changes.pomodoroState.newValue
+      ) {
+        handlePomodoroResponse({
+          success: true,
+          state: changes.pomodoroState.newValue,
+        });
       }
     });
   }
