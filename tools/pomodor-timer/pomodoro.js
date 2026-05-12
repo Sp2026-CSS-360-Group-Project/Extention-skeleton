@@ -7,6 +7,7 @@ const pomodoroStateHelpers =
     : require("./pomodoroState.js");
 
 const {
+  POMODORO_STORAGE_KEY,
   createInitialPomodoroState,
   formatTime,
   pausePomodoro,
@@ -93,8 +94,10 @@ function handlePomodoroStart() {
   // Optimistic UI update: reflect running state immediately so the popup
   // doesn't appear out-of-sync while the background service worker wakes.
   try {
-    // Optimistically show running status while background handles alarms.
-    document.getElementById("pomodoroStatus").textContent = "Running";
+    pomodoroState = startPomodoro(pomodoroState);
+    renderPomodoro(pomodoroState);
+    startPomodoroInterval();
+    chrome.storage.local.set({ [POMODORO_STORAGE_KEY]: pomodoroState });
   } catch (e) {
     // ignore
   }
@@ -109,8 +112,10 @@ function handlePomodoroPause() {
   // Optimistic UI update: pause immediately in the popup while background
   // commits pause in storage.
   try {
-    // Optimistically show paused status; final remaining time comes from storage.
-    document.getElementById("pomodoroStatus").textContent = "Paused";
+    pomodoroState = pausePomodoro(pomodoroState);
+    renderPomodoro(pomodoroState);
+    stopPomodoroInterval();
+    chrome.storage.local.set({ [POMODORO_STORAGE_KEY]: pomodoroState });
   } catch (e) {
     // ignore
   }
@@ -124,9 +129,10 @@ function handlePomodoroReset() {
 
   // Optimistic UI update: reset the popup immediately.
   try {
-    // Optimistically reset UI; authoritative state will be written by background.
-    document.getElementById("pomodoroStatus").textContent = "Paused";
-    document.getElementById("pomodoroTime").textContent = "25:00";
+    pomodoroState = resetPomodoro();
+    renderPomodoro(pomodoroState);
+    stopPomodoroInterval();
+    chrome.storage.local.set({ [POMODORO_STORAGE_KEY]: pomodoroState });
   } catch (e) {
     // ignore
   }
