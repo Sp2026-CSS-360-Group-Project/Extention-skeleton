@@ -9,15 +9,15 @@ const eslint = new ESLint({
       files: ["**/*.js"],
       languageOptions: {
         ecmaVersion: "latest",
-        sourceType: "script"
+        sourceType: "script",
       },
       rules: {
-        "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+        "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
         "no-undef": "error",
-        "no-console": "off"
-      }
-    }
-  ]
+        "no-console": "off",
+      },
+    },
+  ],
 });
 
 async function lintCode() {
