@@ -27,6 +27,28 @@ npm run smoke
 Every pull request must be reviewed by at least one other team member before
 merging.
 
+## Flask Docker Server
+
+Build the minimal Flask server image:
+
+```bash
+docker build -t focuskit-flask-server ./flask-server
+```
+
+Run the server:
+
+```bash
+docker run --rm -p 5000:5000 focuskit-flask-server
+```
+
+The server should be visible at:
+
+http://localhost:5000
+
+The health endpoint should be visible at:
+
+http://localhost:5000/api/health
+
 This repo will be the base of our chrome extentions
 
 To test and use this you will have to follow these steps.
