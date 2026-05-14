@@ -49,6 +49,49 @@ The health endpoint should be visible at:
 
 http://localhost:5000/api/health
 
+## CI/CD Deployment Pipeline
+
+This project uses a hand-built PowerShell deployment script for the sprint
+deployment assignment. The local Docker container is the production deployment
+environment for this assignment.
+
+Before running the script:
+
+- Docker Desktop must be running.
+- Node/npm must be installed.
+- The `upstream` remote must point to the team repo.
+
+Run the deployment pipeline:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/deploy.ps1
+```
+
+The script:
+
+- pulls latest `main`
+- runs static analysis
+- runs tests
+- builds the Docker image
+- deploys the container
+- verifies `/api/health`
+
+Production URL:
+
+http://localhost:5000
+
+Health check URL:
+
+http://localhost:5000/api/health
+
+## PR Links Accepted In The Past Week
+
+- PR #20:
+  https://github.com/Sp2026-CSS-360-Group-Project/Extention-skeleton/pull/20
+
+PRs must pass static analysis and be reviewed by at least one other teammate
+before merging.
+
 This repo will be the base of our chrome extentions
 
 To test and use this you will have to follow these steps.
