@@ -21,14 +21,19 @@ function Invoke-NativeCommand {
     }
 }
 
-Write-Step "Fetching latest code from upstream"
-Invoke-NativeCommand "git" @("fetch", "upstream")
+Write-Step "Fetching latest upstream/main"
+Invoke-NativeCommand "git" @("fetch", "upstream", "main")
 
-Write-Step "Checking out main"
-Invoke-NativeCommand "git" @("checkout", "main")
+Write-Step "Fast-forwarding current branch with upstream/main if possible"
+try {
+    Invoke-NativeCommand "git" @("merge", "--ff-only", "upstream/main")
+} catch {
+    throw "Could not fast-forward the current branch with upstream/main. Update this branch manually, resolve any conflicts, then rerun this script."
+}
 
-Write-Step "Pulling latest upstream/main"
-Invoke-NativeCommand "git" @("pull", "upstream", "main")
+if (-not (Test-Path -Path "./flask-server" -PathType Container)) {
+    throw "Missing ./flask-server. The Flask Docker server has not been merged yet or is not present on the current branch. Run this script from a branch that contains the Flask Docker server files."
+}
 
 Write-Step "Installing npm dependencies"
 Invoke-NativeCommand "npm" @("ci")

@@ -55,6 +55,17 @@ This project uses a hand-built PowerShell deployment script for the sprint
 deployment assignment. The local Docker container is the production deployment
 environment for this assignment.
 
+The deployment script fetches the latest team `main` branch and fast-forwards
+the current branch when possible. During PR testing, run the script from a
+branch that already contains the Flask Docker server files. After the PR is
+merged, running the script from `main` will pull the latest `main` and deploy
+the current production container.
+
+The first deployment test failed because the script pulled `upstream/main`
+before the Flask Docker files had been merged. The script now keeps the current
+branch, fast-forwards only when safe, and stops with a clear error if
+`flask-server` is missing.
+
 Before running the script:
 
 - Docker Desktop must be running.
@@ -69,7 +80,8 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy.ps1
 
 The script:
 
-- pulls latest `main`
+- fetches latest team `main`
+- fast-forwards the current branch when possible
 - runs static analysis
 - runs tests
 - builds the Docker image
