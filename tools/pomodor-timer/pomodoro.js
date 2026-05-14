@@ -193,7 +193,7 @@ function sendBackgroundMessage(message, callback) {
 function renderPomodoro(state) {
   getPomodoroPanel();
   document.getElementById("pomodoroTime").textContent = formatTime(
-    state.remainingSeconds,
+    state.remainingSeconds
   );
   document.getElementById("pomodoroStatus").textContent = state.isRunning
     ? "Running"
