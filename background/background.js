@@ -112,7 +112,7 @@ async function handleMessageAsync(message) {
   if (message.action === MESSAGE_ACTIONS.pomodoroPause) {
     return {
       success: true,
-      state: await updatePomodoroState(pausePomodoro, false),
+      state: await updatePomodoroState(pausePomodoro, false, message.state),
     };
   }
 
@@ -170,8 +170,10 @@ async function getCurrentPomodoroState() {
 }
 
 // Apply a timer transition, persist it, update alarms, and inform open popup views.
-async function updatePomodoroState(transition, shouldRunAlarm) {
-  const previousState = await readPomodoroState();
+async function updatePomodoroState(transition, shouldRunAlarm, overrideState) {
+  const previousState = overrideState
+    ? restorePomodoroState(overrideState)
+    : await readPomodoroState();
   const state = transition(previousState);
   await setStorage({ [POMODORO_STORAGE_KEY]: state });
 

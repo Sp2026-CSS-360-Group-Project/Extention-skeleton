@@ -171,6 +171,53 @@ describe("FocusKit background service worker", () => {
     Date.now.mockRestore();
   });
 
+  test("returns saved paused Pomodoro time without resetting", async () => {
+    jest.spyOn(Date, "now").mockReturnValue(100000);
+    const savedState = {
+      remainingSeconds: 1499,
+      isRunning: false,
+      lastUpdatedAt: 99000,
+    };
+    const { chrome } = loadBackground({ pomodoroState: savedState });
+
+    const response = await sendMessage(chrome, {
+      action: "pomodoro:getState",
+    });
+
+    expect(response.success).toBe(true);
+    expect(response.state).toEqual(savedState);
+    expect(chrome.__storage.pomodoroState).toEqual(savedState);
+
+    Date.now.mockRestore();
+  });
+
+  test("pause can persist the popup-visible remaining time", async () => {
+    jest.spyOn(Date, "now").mockReturnValue(200000);
+    const { chrome } = loadBackground({
+      pomodoroState: {
+        remainingSeconds: 1500,
+        isRunning: true,
+        lastUpdatedAt: 1000,
+      },
+    });
+
+    const response = await sendMessage(chrome, {
+      action: "pomodoro:pause",
+      state: {
+        remainingSeconds: 1499,
+        isRunning: false,
+        lastUpdatedAt: 199000,
+      },
+    });
+
+    expect(response.success).toBe(true);
+    expect(response.state.remainingSeconds).toBe(1499);
+    expect(response.state.isRunning).toBe(false);
+    expect(chrome.__storage.pomodoroState.remainingSeconds).toBe(1499);
+
+    Date.now.mockRestore();
+  });
+
   test("fires a completion notification and broadcasts state when the alarm expires", async () => {
     jest.spyOn(Date, "now").mockReturnValue(2000000);
     const { chrome } = loadBackground({
