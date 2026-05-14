@@ -1,3 +1,5 @@
+// Shared storage helpers and default settings for the FocusKit extension.
+
 const DEFAULT_SETTINGS = {
   // Add when settings is created
 };
