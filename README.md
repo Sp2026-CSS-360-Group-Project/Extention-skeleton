@@ -29,7 +29,10 @@ merging.
 
 ## Flask Docker Server
 
-Build the minimal Flask server image:
+This is a minimal RESTful Flask API for the Docker/Flask assignment. It is
+intentionally separate from the Chrome extension.
+
+Build the Flask API image:
 
 ```bash
 docker build -t focuskit-flask-server ./flask-server
@@ -41,13 +44,24 @@ Run the server:
 docker run --rm -p 5000:5000 focuskit-flask-server
 ```
 
-The server should be visible at:
+The API should be visible at:
 
 http://localhost:5000
 
 The health endpoint should be visible at:
 
 http://localhost:5000/api/health
+
+Example REST API requests:
+
+```bash
+curl http://localhost:5000/api/health
+curl http://localhost:5000/api/tasks
+curl -X POST http://localhost:5000/api/tasks -H "Content-Type: application/json" -d "{\"title\":\"Plan focus session\"}"
+curl http://localhost:5000/api/tasks/1
+curl -X PUT http://localhost:5000/api/tasks/1 -H "Content-Type: application/json" -d "{\"completed\":true}"
+curl -X DELETE http://localhost:5000/api/tasks/1
+```
 
 ## CI/CD Deployment Pipeline
 
